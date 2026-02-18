@@ -5,19 +5,49 @@
 // @description  Automate the driving test booking process and notify when a slot is available.
 // @author       jethro-dev
 // @match        https://driverpracticaltest.dvsa.gov.uk/application*
-// @grant        none
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_registerMenuCommand
 // ==/UserScript==
 
 (function () {
     'use strict';
 
-    const drivingLicenceNumber = 'Your_Driver_Licence_Here'; // Set to your driver licence
-    const testDate = '15/08/2024'; // Set your desired test date, format in DD/MM/YYYY
-    const postcode = 'PS2 4PZ'; // Set your postcode
-    const instructorReferenceNumber = ''; // Set to the instructor's reference number or leave as null if not applicable
+    const drivingLicenceNumber = GM_getValue('drivingLicenceNumber', '');
+    const testDate = GM_getValue('testDate', '');
+    const postcode = GM_getValue('postcode', '');
+    const instructorReferenceNumber = GM_getValue('instructorReferenceNumber', '');
     const nearestNumOfCentres = 12; // Number of test centres to find
     const minDelay = 2000; // Minimum delay in milliseconds
     const maxDelay = 4000; // Maximum delay in milliseconds
+
+    function setupConfig() {
+        const dl = prompt('Enter your Driving Licence Number:', GM_getValue('drivingLicenceNumber', ''));
+        if (dl !== null) GM_setValue('drivingLicenceNumber', dl.trim());
+
+        const td = prompt('Enter desired test date (DD/MM/YYYY):', GM_getValue('testDate', ''));
+        if (td !== null) GM_setValue('testDate', td.trim());
+
+        const pc = prompt('Enter your Postcode:', GM_getValue('postcode', ''));
+        if (pc !== null) GM_setValue('postcode', pc.trim());
+
+        const irn = prompt('Enter Instructor Reference Number (optional):', GM_getValue('instructorReferenceNumber', ''));
+        if (irn !== null) GM_setValue('instructorReferenceNumber', irn.trim());
+
+        alert('Configuration saved! Please refresh the page to apply changes.');
+    }
+
+    GM_registerMenuCommand('Configure Script', setupConfig);
+
+    function checkConfig() {
+        if (!GM_getValue('drivingLicenceNumber') || !GM_getValue('testDate') || !GM_getValue('postcode')) {
+            if (confirm('Configuration is missing or incomplete. Would you like to set it now?')) {
+                setupConfig();
+            }
+            return false;
+        }
+        return true;
+    }
 
     function randomIntBetween(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -201,6 +231,8 @@
 
     // Ensure the script runs after the page is fully loaded
     window.addEventListener('load', () => {
-        randomDelay(handlePage);
+        if (checkConfig()) {
+            randomDelay(handlePage);
+        }
     });
 })();

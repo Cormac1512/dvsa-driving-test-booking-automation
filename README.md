@@ -29,17 +29,25 @@ If your exam type is "car" and you don't require special needs accommodations fo
 
 ## Usage
 
-- Navigate to the DVSA driving test booking website
-- You need to manually click the green "Start now" button
-- The script will then automatically start and navigate through the booking process.
+- Navigate to the DVSA driving test booking website.
+- You need to manually click the green "Start now" button.
+- On the first run, the script will prompt you to enter your details (Driving Licence, Test Date, etc.).
+- You can also manually configure or update your details at any time via the Tampermonkey menu:
+    1. Click the Tampermonkey icon in your browser.
+    2. Find "DVSA Driving Test Booking Automation".
+    3. Click on "Configure Script".
+- The script will then automatically navigate through the booking process.
 - Toast notifications will appear to indicate the progress of the automation.
 
 ## Customization
 
-- Driving License Number: Update the drivingLicenceNumber variable with your actual driving license number.
-- Test Date: Update the testDate variable with your preferred test date.
-- Postcode: Update the postcode variable with your postcode.
-- Instructor Reference Number: Update the instructorReferenceNumber variable if applicable.
+You no longer need to edit the script's source code to customize your details. Use the "Configure Script" option in the Tampermonkey menu to securely store your:
+- Driving License Number
+- Preferred Test Date
+- Postcode
+- Instructor Reference Number (if applicable)
+
+These details are stored locally in your browser's Tampermonkey storage and are not exposed in the script's source code.
 
 ## Disclaimer
 
