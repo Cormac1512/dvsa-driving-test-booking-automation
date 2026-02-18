@@ -5,19 +5,59 @@
 // @description  Automate the driving test booking process and notify when a slot is available.
 // @author       jethro-dev
 // @match        https://driverpracticaltest.dvsa.gov.uk/application*
-// @grant        none
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_registerMenuCommand
 // ==/UserScript==
 
 const DVSAAutomation = (function () {
     'use strict';
 
-    const drivingLicenceNumber = 'Your_Driver_Licence_Here'; // Set to your driver licence
-    const testDate = '15/08/2024'; // Set your desired test date, format in DD/MM/YYYY
-    const postcode = 'PS2 4PZ'; // Set your postcode
-    const instructorReferenceNumber = ''; // Set to the instructor's reference number or leave as null if not applicable
+    function getValue(key, defaultValue) {
+        if (typeof GM_getValue !== 'undefined') {
+            return GM_getValue(key, defaultValue);
+        }
+        return defaultValue;
+    }
+
+    function setValue(key, value) {
+        if (typeof GM_setValue !== 'undefined') {
+            GM_setValue(key, value);
+        }
+    }
+
+    const DEFAULT_LICENCE = 'Your_Driver_Licence_Here';
+    const DEFAULT_DATE = '15/08/2024';
+    const DEFAULT_POSTCODE = 'PS2 4PZ';
+    const DEFAULT_INSTRUCTOR = '';
+
+    const drivingLicenceNumber = getValue('drivingLicenceNumber', DEFAULT_LICENCE); // Set to your driver licence
+    const testDate = getValue('testDate', DEFAULT_DATE); // Set your desired test date, format in DD/MM/YYYY
+    const postcode = getValue('postcode', DEFAULT_POSTCODE); // Set your postcode
+    const instructorReferenceNumber = getValue('instructorReferenceNumber', DEFAULT_INSTRUCTOR); // Set to the instructor's reference number or leave as null if not applicable
     const nearestNumOfCentres = 12; // Number of test centres to find
     const minDelay = 2000; // Minimum delay in milliseconds
     const maxDelay = 4000; // Maximum delay in milliseconds
+
+    function configureScript() {
+        const currentLicence = getValue('drivingLicenceNumber', DEFAULT_LICENCE);
+        const newLicence = prompt("Enter Driving Licence Number:", currentLicence);
+        if (newLicence !== null) setValue('drivingLicenceNumber', newLicence);
+
+        const currentDate = getValue('testDate', DEFAULT_DATE);
+        const newDate = prompt("Enter Test Date (DD/MM/YYYY):", currentDate);
+        if (newDate !== null) setValue('testDate', newDate);
+
+        const currentPostcode = getValue('postcode', DEFAULT_POSTCODE);
+        const newPostcode = prompt("Enter Postcode:", currentPostcode);
+        if (newPostcode !== null) setValue('postcode', newPostcode);
+
+        const currentInstructor = getValue('instructorReferenceNumber', DEFAULT_INSTRUCTOR);
+        const newInstructor = prompt("Enter Instructor Reference Number (Optional):", currentInstructor);
+        if (newInstructor !== null) setValue('instructorReferenceNumber', newInstructor);
+
+        alert("Configuration saved. Please reload the page for changes to take effect.");
+    }
 
     const app = {
         drivingLicenceNumber,
@@ -215,6 +255,10 @@ const DVSAAutomation = (function () {
         `;
         document.head.appendChild(style);
     })();
+
+    if (typeof GM_registerMenuCommand !== 'undefined') {
+        GM_registerMenuCommand("Configure Script", configureScript);
+    }
 
     if (typeof module === 'undefined') {
         app.init();
