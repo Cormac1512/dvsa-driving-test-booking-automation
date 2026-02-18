@@ -5,25 +5,28 @@
 // @description  Automate the driving test booking process and notify when a slot is available.
 // @author       jethro-dev
 // @match        https://driverpracticaltest.dvsa.gov.uk/application*
-// @grant        none
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_registerMenuCommand
 // ==/UserScript==
 
 const DVSAAutomation = (function () {
     'use strict';
 
-    const drivingLicenceNumber = 'Your_Driver_Licence_Here'; // Set to your driver licence
-    const testDate = '15/08/2024'; // Set your desired test date, format in DD/MM/YYYY
-    const postcode = 'PS2 4PZ'; // Set your postcode
-    const instructorReferenceNumber = ''; // Set to the instructor's reference number or leave as null if not applicable
+    // Helper functions for Tampermonkey APIs
+    const getValue = (typeof GM_getValue !== 'undefined') ? GM_getValue : (key, defaultValue) => defaultValue;
+    const setValue = (typeof GM_setValue !== 'undefined') ? GM_setValue : (key, value) => { console.log(`[Mock] Set ${key} to ${value}`); };
+    const registerMenuCommand = (typeof GM_registerMenuCommand !== 'undefined') ? GM_registerMenuCommand : (caption, func) => { };
+
     const nearestNumOfCentres = 12; // Number of test centres to find
     const minDelay = 2000; // Minimum delay in milliseconds
     const maxDelay = 4000; // Maximum delay in milliseconds
 
     const app = {
-        drivingLicenceNumber,
-        testDate,
-        postcode,
-        instructorReferenceNumber,
+        get drivingLicenceNumber() { return getValue('drivingLicenceNumber', 'Your_Driver_Licence_Here'); },
+        get testDate() { return getValue('testDate', '15/08/2024'); },
+        get postcode() { return getValue('postcode', 'PS2 4PZ'); },
+        get instructorReferenceNumber() { return getValue('instructorReferenceNumber', ''); },
         nearestNumOfCentres,
         minDelay,
         maxDelay,
@@ -160,7 +163,26 @@ const DVSAAutomation = (function () {
             }
         },
 
+        configure() {
+            const update = (key, promptText, defaultVal) => {
+                const current = getValue(key, defaultVal);
+                const newVal = prompt(promptText, current);
+                if (newVal !== null) {
+                    setValue(key, newVal);
+                }
+            };
+
+            update('drivingLicenceNumber', 'Enter Driving Licence Number:', 'Your_Driver_Licence_Here');
+            update('testDate', 'Enter Test Date (DD/MM/YYYY):', '15/08/2024');
+            update('postcode', 'Enter Postcode:', 'PS2 4PZ');
+            update('instructorReferenceNumber', 'Enter Instructor Reference Number (optional):', '');
+
+            app.showToast('Configuration saved!');
+        },
+
         init() {
+            registerMenuCommand("Configure Script", app.configure);
+
             // Ensure the script runs after the page is fully loaded
             window.addEventListener('load', () => {
                 app.randomDelay(app.handlePage);
