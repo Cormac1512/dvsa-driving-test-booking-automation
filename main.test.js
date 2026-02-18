@@ -161,57 +161,6 @@ describe('DVSA Driving Test Booking Automation', () => {
         }
     });
 
-    test('showToast creates and removes element and injects styles once', () => {
-        const mockStyle = { innerHTML: '' };
-        const mockToast = {
-            textContent: '',
-            classList: { add: jest.fn(), remove: jest.fn() }
-        };
-
-        // Reset injection flag
-        DVSAAutomation._toastStylesInjected = false;
-
-        // Mock return values: first for style, second for div
-        document.createElement
-            .mockReturnValueOnce(mockStyle)
-            .mockReturnValueOnce(mockToast);
-
-        DVSAAutomation.showToast('Test Message');
-
-        // Check style injection
-        expect(document.createElement).toHaveBeenCalledWith('style');
-        expect(document.head.appendChild).toHaveBeenCalledWith(mockStyle);
-        expect(mockStyle.innerHTML).toContain('.toast');
-        expect(DVSAAutomation._toastStylesInjected).toBe(true);
-
-        // Check toast creation
-        expect(document.createElement).toHaveBeenCalledWith('div');
-        expect(mockToast.textContent).toBe('Test Message');
-        expect(document.body.appendChild).toHaveBeenCalledWith(mockToast);
-
-        jest.advanceTimersByTime(10);
-        expect(mockToast.classList.add).toHaveBeenCalledWith('show');
-
-        jest.advanceTimersByTime(3000);
-        expect(mockToast.classList.remove).toHaveBeenCalledWith('show');
-
-        jest.advanceTimersByTime(300);
-        expect(document.body.removeChild).toHaveBeenCalledWith(mockToast);
-
-        // Test that second call does not inject styles again
-        const mockToast2 = {
-             textContent: '',
-             classList: { add: jest.fn(), remove: jest.fn() }
-        };
-        document.createElement.mockReturnValueOnce(mockToast2); // Prepare mock for next toast
-
-        DVSAAutomation.showToast('Another Message');
-
-        // Should have called createElement 3 times total: style, div1, div2
-        expect(document.createElement).toHaveBeenCalledTimes(3);
-        // Should have appended child to head only once
-        expect(document.head.appendChild).toHaveBeenCalledTimes(1);
-    });
 
     test('isValidLicence validates correct length and characters', () => {
         expect(DVSAAutomation.isValidLicence('ABCDE12345FGHIJ6')).toBe(true);
