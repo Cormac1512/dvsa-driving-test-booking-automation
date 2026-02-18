@@ -45,10 +45,6 @@
         }, 3000);
     }
 
-    function scrollToElement(element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
     function step1() {
         console.log('Running step 1...');
         const testTypeCarBtn = document.querySelector('#test-type-car');
