@@ -23,6 +23,10 @@ global.window = {
 global.console = {
     log: jest.fn()
 };
+global.GM_setValue = jest.fn();
+global.GM_getValue = jest.fn();
+global.prompt = jest.fn();
+global.alert = jest.fn();
 
 const DVSAAutomation = require('./main');
 
@@ -207,5 +211,72 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(document.createElement).toHaveBeenCalledTimes(3);
         // Should have appended child to head only once
         expect(document.head.appendChild).toHaveBeenCalledTimes(1);
+    });
+
+    test('isValidLicence validates correct length and characters', () => {
+        expect(DVSAAutomation.isValidLicence('ABCDE12345FGHIJ6')).toBe(true);
+        expect(DVSAAutomation.isValidLicence('abcde12345fghij6')).toBe(true);
+        expect(DVSAAutomation.isValidLicence('SHORT')).toBe(false);
+        expect(DVSAAutomation.isValidLicence('TOO_LONG_LICENCE_NUMBER')).toBe(false);
+        expect(DVSAAutomation.isValidLicence('INVALID-CHARS!!')).toBe(false);
+    });
+
+    test('isValidDate validates format and date validity', () => {
+        expect(DVSAAutomation.isValidDate('15/08/2024')).toBe(true);
+        expect(DVSAAutomation.isValidDate('29/02/2024')).toBe(true); // Leap year
+        expect(DVSAAutomation.isValidDate('2024/08/15')).toBe(false); // Wrong format
+        expect(DVSAAutomation.isValidDate('15-08-2024')).toBe(false); // Wrong separator
+        expect(DVSAAutomation.isValidDate('32/01/2024')).toBe(false); // Invalid day
+        expect(DVSAAutomation.isValidDate('29/02/2023')).toBe(false); // Not a leap year
+        expect(DVSAAutomation.isValidDate('invalid')).toBe(false);
+    });
+
+    test('configure saves valid inputs', () => {
+        GM_getValue.mockReturnValue('CURRENT_VAL');
+        prompt
+            .mockReturnValueOnce('ABCDE12345FGHIJ6') // Valid Licence
+            .mockReturnValueOnce('15/08/2024') // Valid Date
+            .mockReturnValueOnce('PS2 4PZ') // Postcode
+            .mockReturnValueOnce('123456'); // Instructor
+
+        DVSAAutomation.configure();
+
+        expect(GM_setValue).toHaveBeenCalledWith('drivingLicenceNumber', 'ABCDE12345FGHIJ6');
+        expect(GM_setValue).toHaveBeenCalledWith('testDate', '15/08/2024');
+        expect(GM_setValue).toHaveBeenCalledWith('postcode', 'PS2 4PZ');
+        expect(GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', '123456');
+        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Configuration saved'));
+    });
+
+    test('configure rejects invalid inputs', () => {
+        GM_getValue.mockReturnValue('CURRENT_VAL');
+        prompt.mockReset(); // Reset previous mocks
+        prompt
+             .mockReturnValueOnce('INVALID_LICENCE') // Licence
+             .mockReturnValueOnce('INVALID_DATE')    // Date
+             .mockReturnValueOnce('POSTCODE')        // Postcode
+             .mockReturnValueOnce('INSTRUCTOR');     // Instructor
+
+        DVSAAutomation.configure();
+
+        expect(GM_setValue).not.toHaveBeenCalledWith('drivingLicenceNumber', expect.anything());
+        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Licence Number'));
+
+        expect(GM_setValue).not.toHaveBeenCalledWith('testDate', expect.anything());
+        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Date'));
+
+        // Postcode and Instructor are still saved
+        expect(GM_setValue).toHaveBeenCalledWith('postcode', 'POSTCODE');
+        expect(GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', 'INSTRUCTOR');
+    });
+
+    test('configure handles cancelled prompts', () => {
+        GM_getValue.mockReturnValue('CURRENT_VAL');
+        prompt.mockReset();
+        prompt.mockReturnValue(null); // All prompts cancelled
+
+        DVSAAutomation.configure();
+
+        expect(GM_setValue).not.toHaveBeenCalled();
     });
 });

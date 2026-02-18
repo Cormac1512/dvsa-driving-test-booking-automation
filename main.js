@@ -39,26 +39,6 @@ const DVSAAutomation = (function () {
     const minDelay = 2000; // Minimum delay in milliseconds
     const maxDelay = 4000; // Maximum delay in milliseconds
 
-    function configureScript() {
-        const currentLicence = getValue('drivingLicenceNumber', DEFAULT_LICENCE);
-        const newLicence = prompt("Enter Driving Licence Number:", currentLicence);
-        if (newLicence !== null) setValue('drivingLicenceNumber', newLicence);
-
-        const currentDate = getValue('testDate', DEFAULT_DATE);
-        const newDate = prompt("Enter Test Date (DD/MM/YYYY):", currentDate);
-        if (newDate !== null) setValue('testDate', newDate);
-
-        const currentPostcode = getValue('postcode', DEFAULT_POSTCODE);
-        const newPostcode = prompt("Enter Postcode:", currentPostcode);
-        if (newPostcode !== null) setValue('postcode', newPostcode);
-
-        const currentInstructor = getValue('instructorReferenceNumber', DEFAULT_INSTRUCTOR);
-        const newInstructor = prompt("Enter Instructor Reference Number (Optional):", currentInstructor);
-        if (newInstructor !== null) setValue('instructorReferenceNumber', newInstructor);
-
-        alert("Configuration saved. Please reload the page for changes to take effect.");
-    }
-
     const app = {
         drivingLicenceNumber,
         testDate,
@@ -68,6 +48,18 @@ const DVSAAutomation = (function () {
         minDelay,
         maxDelay,
 
+        isValidLicence(licence) {
+            return /^[a-zA-Z0-9]{16}$/.test(licence);
+        },
+
+        isValidDate(dateString) {
+            const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+            if (!regex.test(dateString)) return false;
+            const [day, month, year] = dateString.split('/').map(Number);
+            const date = new Date(year, month - 1, day);
+            return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
+        },
+
         randomIntBetween(min, max) {
             return Math.floor(Math.random() * (max - min + 1)) + min;
         },
@@ -75,6 +67,38 @@ const DVSAAutomation = (function () {
         randomDelay(callback) {
             const delay = app.randomIntBetween(app.minDelay, app.maxDelay); // Random delay between minDelay and maxDelay
             setTimeout(callback, delay);
+        },
+
+        configure() {
+            const currentLicence = getValue('drivingLicenceNumber', DEFAULT_LICENCE);
+            const newLicence = prompt("Enter Driving Licence Number:", currentLicence);
+            if (newLicence !== null) {
+                if (app.isValidLicence(newLicence)) {
+                    setValue('drivingLicenceNumber', newLicence);
+                } else {
+                    alert("Invalid Licence Number! It should be 16 alphanumeric characters.");
+                }
+            }
+
+            const currentDate = getValue('testDate', DEFAULT_DATE);
+            const newDate = prompt("Enter Test Date (DD/MM/YYYY):", currentDate);
+            if (newDate !== null) {
+                if (app.isValidDate(newDate)) {
+                    setValue('testDate', newDate);
+                } else {
+                    alert("Invalid Date! Format should be DD/MM/YYYY.");
+                }
+            }
+
+            const currentPostcode = getValue('postcode', DEFAULT_POSTCODE);
+            const newPostcode = prompt("Enter Postcode:", currentPostcode);
+            if (newPostcode !== null) setValue('postcode', newPostcode);
+
+            const currentInstructor = getValue('instructorReferenceNumber', DEFAULT_INSTRUCTOR);
+            const newInstructor = prompt("Enter Instructor Reference Number (Optional):", currentInstructor);
+            if (newInstructor !== null) setValue('instructorReferenceNumber', newInstructor);
+
+            alert("Configuration saved (valid entries only). Please reload the page for changes to take effect.");
         },
 
         _toastStylesInjected: false,
@@ -262,7 +286,7 @@ const DVSAAutomation = (function () {
     };
 
     if (typeof GM_registerMenuCommand !== 'undefined') {
-        GM_registerMenuCommand("Configure Script", configureScript);
+        GM_registerMenuCommand("Configure Script", app.configure);
     }
 
     if (typeof module === 'undefined') {
