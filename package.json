@@ -1,0 +1,24 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "We all know that feeling: trying to book a driving test slot on the DVSA website can be a hideous, soul-crushing experience. The endless refreshing, the constant unavailability of slots, the despair... I've been there. That's why I created this project! This script automates the entire process, sparing you from the torment of finding an available test slot. Sit back, relax, and let the automation handle the chaos for you.",
+  "main": "main.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Cormac1512/dvsa-driving-test-booking-automation.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Cormac1512/dvsa-driving-test-booking-automation/issues"
+  },
+  "homepage": "https://github.com/Cormac1512/dvsa-driving-test-booking-automation#readme"
+}
