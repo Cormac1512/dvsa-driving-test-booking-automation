@@ -8,7 +8,7 @@
 // @grant        none
 // ==/UserScript==
 
-(function () {
+const DVSAAutomation = (function () {
     'use strict';
 
     const drivingLicenceNumber = 'Your_Driver_Licence_Here'; // Set to your driver licence
@@ -19,137 +19,154 @@
     const minDelay = 2000; // Minimum delay in milliseconds
     const maxDelay = 4000; // Maximum delay in milliseconds
 
-    function randomIntBetween(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+    const app = {
+        drivingLicenceNumber,
+        testDate,
+        postcode,
+        instructorReferenceNumber,
+        nearestNumOfCentres,
+        minDelay,
+        maxDelay,
 
-    function randomDelay(callback) {
-        const delay = randomIntBetween(minDelay, maxDelay); // Random delay between minDelay and maxDelay
-        setTimeout(callback, delay);
-    }
+        randomIntBetween(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        },
 
-    function showToast(message) {
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.textContent = message;
-        document.body.appendChild(toast);
+        randomDelay(callback) {
+            const delay = app.randomIntBetween(app.minDelay, app.maxDelay); // Random delay between minDelay and maxDelay
+            setTimeout(callback, delay);
+        },
 
-        setTimeout(() => {
-            toast.classList.add('show');
-        }, 10);
-        setTimeout(() => {
-            toast.classList.remove('show');
+        showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
             setTimeout(() => {
-                document.body.removeChild(toast);
-            }, 300);
-        }, 3000);
-    }
+                toast.classList.add('show');
+            }, 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        },
 
-    function scrollToElement(element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+        scrollToElement(element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        },
 
-    function step1() {
-        console.log('Running step 1...');
-        const testTypeCarBtn = document.querySelector('#test-type-car');
-        if (testTypeCarBtn) {
-            testTypeCarBtn.click();
-        }
-    }
-
-    function step2() {
-        console.log('Running step 2...');
-        const drivingLicenceInput = document.querySelector('#driving-licence');
-        if (drivingLicenceInput) {
-            drivingLicenceInput.value = drivingLicenceNumber;
-        }
-
-        const specialNeedsNoneInput = document.querySelector('#special-needs-none');
-        if (specialNeedsNoneInput) {
-            specialNeedsNoneInput.checked = true;
-        }
-
-        const submitBtn = document.querySelector('#driving-licence-submit');
-        if (submitBtn) {
-            submitBtn.click();
-        }
-    }
-
-    function step3() {
-        console.log('Running step 3...');
-        const testDateInput = document.querySelector('#test-choice-calendar');
-        if (testDateInput) {
-            testDateInput.value = testDate;
-        }
-
-        if (instructorReferenceNumber !== null) {
-            const instructorInput = document.querySelector('#instructor-prn');
-            if (instructorInput) {
-                instructorInput.value = instructorReferenceNumber;
+        step1() {
+            console.log('Running step 1...');
+            const testTypeCarBtn = document.querySelector('#test-type-car');
+            if (testTypeCarBtn) {
+                testTypeCarBtn.click();
             }
-        }
+        },
 
-        const submitBtn = document.querySelector('#driving-licence-submit');
-        if (submitBtn) {
-            submitBtn.click();
-        }
-    }
-
-    function step4() {
-        console.log('Running step 4...');
-        const postcodeInput = document.querySelector('#test-centres-input');
-        if (postcodeInput) {
-            postcodeInput.value = postcode;
-        }
-
-        const submitBtn = document.querySelector('#test-centres-submit');
-        if (submitBtn) {
-            submitBtn.click();
-        }
-    }
-
-    function step5() {
-        console.log('Running step 5...');
-        const results = document.querySelector('.test-centre-results');
-
-        if (!results) {
-            console.log('Entering postcode and searching for test centers...');
-            document.querySelector('#test-centres-input').value = postcode;
-            document.querySelector('#test-centres-submit').click();
-        } else {
-            console.log('Checking number of test centers found...');
-            if (results.children.length < nearestNumOfCentres) {
-                document.querySelector('#fetch-more-centres').click();
+        step2() {
+            console.log('Running step 2...');
+            const drivingLicenceInput = document.querySelector('#driving-licence');
+            if (drivingLicenceInput) {
+                drivingLicenceInput.value = app.drivingLicenceNumber;
             }
 
-            // Sleep and search again
-            const interval = randomIntBetween(30000, 60000);
-            console.log('Sleeping for ' + interval / 1000 + 's');
-            setTimeout(() => {
-                document.location.href = "https://driverpracticaltest.dvsa.gov.uk/application";
-            }, interval);
-        }
-    }
+            const specialNeedsNoneInput = document.querySelector('#special-needs-none');
+            if (specialNeedsNoneInput) {
+                specialNeedsNoneInput.checked = true;
+            }
 
-    function handlePage() {
-        switch (document.title) {
-            case 'Type of test':
-                randomDelay(step1);
-                break;
-            case 'Licence details':
-                randomDelay(step2);
-                break;
-            case 'Test date':
-                randomDelay(step3);
-                break;
-            case 'Test centre':
-                randomDelay(step4);
-                break;
-            default:
-                console.log('Unknown page title:', document.title);
-                break;
+            const submitBtn = document.querySelector('#driving-licence-submit');
+            if (submitBtn) {
+                submitBtn.click();
+            }
+        },
+
+        step3() {
+            console.log('Running step 3...');
+            const testDateInput = document.querySelector('#test-choice-calendar');
+            if (testDateInput) {
+                testDateInput.value = app.testDate;
+            }
+
+            if (app.instructorReferenceNumber !== null && app.instructorReferenceNumber !== '') {
+                const instructorInput = document.querySelector('#instructor-prn');
+                if (instructorInput) {
+                    instructorInput.value = app.instructorReferenceNumber;
+                }
+            }
+
+            const submitBtn = document.querySelector('#driving-licence-submit');
+            if (submitBtn) {
+                submitBtn.click();
+            }
+        },
+
+        step4() {
+            console.log('Running step 4...');
+            const postcodeInput = document.querySelector('#test-centres-input');
+            if (postcodeInput) {
+                postcodeInput.value = app.postcode;
+            }
+
+            const submitBtn = document.querySelector('#test-centres-submit');
+            if (submitBtn) {
+                submitBtn.click();
+            }
+        },
+
+        step5() {
+            console.log('Running step 5...');
+            const results = document.querySelector('.test-centre-results');
+
+            if (!results) {
+                console.log('Entering postcode and searching for test centers...');
+                document.querySelector('#test-centres-input').value = app.postcode;
+                document.querySelector('#test-centres-submit').click();
+            } else {
+                console.log('Checking number of test centers found...');
+                if (results.children.length < app.nearestNumOfCentres) {
+                    document.querySelector('#fetch-more-centres').click();
+                }
+
+                // Sleep and search again
+                const interval = app.randomIntBetween(30000, 60000);
+                console.log('Sleeping for ' + interval / 1000 + 's');
+                setTimeout(() => {
+                    document.location.href = "https://driverpracticaltest.dvsa.gov.uk/application";
+                }, interval);
+            }
+        },
+
+        handlePage() {
+            switch (document.title) {
+                case 'Type of test':
+                    app.randomDelay(app.step1);
+                    break;
+                case 'Licence details':
+                    app.randomDelay(app.step2);
+                    break;
+                case 'Test date':
+                    app.randomDelay(app.step3);
+                    break;
+                case 'Test centre':
+                    app.randomDelay(app.step4);
+                    break;
+                default:
+                    console.log('Unknown page title:', document.title);
+                    break;
+            }
+        },
+
+        init() {
+            // Ensure the script runs after the page is fully loaded
+            window.addEventListener('load', () => {
+                app.randomDelay(app.handlePage);
+            });
         }
-    }
+    };
 
     (function createToastContainer() {
         const style = document.createElement('style');
@@ -199,8 +216,13 @@
         document.head.appendChild(style);
     })();
 
-    // Ensure the script runs after the page is fully loaded
-    window.addEventListener('load', () => {
-        randomDelay(handlePage);
-    });
+    if (typeof module === 'undefined') {
+        app.init();
+    }
+
+    return app;
 })();
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = DVSAAutomation;
+}
