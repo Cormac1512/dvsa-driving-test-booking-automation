@@ -98,7 +98,40 @@ const DVSAAutomation = (function () {
             const newInstructor = prompt("Enter Instructor Reference Number (Optional):", currentInstructor);
             if (newInstructor !== null) setValue('instructorReferenceNumber', newInstructor);
 
-            alert("Configuration saved (valid entries only). Please reload the page for changes to take effect.");
+            app.showToast("Configuration saved. Please reload the page.");
+        },
+
+        showToast(message, duration = 3000) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.right = '20px';
+            toast.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+            toast.style.color = '#fff';
+            toast.style.padding = '10px 20px';
+            toast.style.borderRadius = '5px';
+            toast.style.zIndex = '10000';
+            toast.style.transition = 'opacity 0.5s ease-in-out';
+            toast.style.opacity = '0';
+            toast.style.fontFamily = 'Arial, sans-serif';
+            toast.style.fontSize = '14px';
+
+            document.body.appendChild(toast);
+
+            // Fade in
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+            });
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    if (document.body.contains(toast)) {
+                        document.body.removeChild(toast);
+                    }
+                }, 500);
+            }, duration);
         },
 
 
@@ -108,6 +141,7 @@ const DVSAAutomation = (function () {
 
         step1() {
             console.log('Running step 1...');
+            app.showToast('Selecting test type...');
             const testTypeCarBtn = document.querySelector('#test-type-car');
             if (testTypeCarBtn) {
                 testTypeCarBtn.click();
@@ -116,6 +150,7 @@ const DVSAAutomation = (function () {
 
         step2() {
             console.log('Running step 2...');
+            app.showToast('Entering licence details...');
             const drivingLicenceInput = document.querySelector('#driving-licence');
             if (drivingLicenceInput) {
                 drivingLicenceInput.value = app.drivingLicenceNumber;
@@ -134,6 +169,7 @@ const DVSAAutomation = (function () {
 
         step3() {
             console.log('Running step 3...');
+            app.showToast('Entering test date...');
             const testDateInput = document.querySelector('#test-choice-calendar');
             if (testDateInput) {
                 testDateInput.value = app.testDate;
@@ -154,6 +190,7 @@ const DVSAAutomation = (function () {
 
         step4() {
             console.log('Running step 4...');
+            app.showToast('Entering postcode...');
             const postcodeInput = document.querySelector('#test-centres-input');
             if (postcodeInput) {
                 postcodeInput.value = app.postcode;
@@ -171,17 +208,21 @@ const DVSAAutomation = (function () {
 
             if (!results) {
                 console.log('Entering postcode and searching for test centers...');
+                app.showToast('Searching for test centres...');
                 document.querySelector('#test-centres-input').value = app.postcode;
                 document.querySelector('#test-centres-submit').click();
             } else {
                 console.log('Checking number of test centers found...');
+                app.showToast('Checking results...');
                 if (results.children.length < app.nearestNumOfCentres) {
+                    app.showToast('Fetching more centres...');
                     document.querySelector('#fetch-more-centres').click();
                 }
 
                 // Sleep and search again
                 const interval = app.randomIntBetween(30000, 60000);
                 console.log('Sleeping for ' + interval / 1000 + 's');
+                app.showToast(`Waiting ${Math.round(interval / 1000)}s before next check...`, 5000);
                 setTimeout(() => {
                     document.location.href = "https://driverpracticaltest.dvsa.gov.uk/application";
                 }, interval);

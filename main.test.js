@@ -3,7 +3,8 @@ global.document = {
     head: { appendChild: jest.fn() },
     body: {
         appendChild: jest.fn(),
-        removeChild: jest.fn()
+        removeChild: jest.fn(),
+        contains: jest.fn().mockReturnValue(true)
     },
     createElement: jest.fn().mockReturnValue({
         innerHTML: '',
@@ -27,6 +28,7 @@ global.GM_setValue = jest.fn();
 global.GM_getValue = jest.fn();
 global.prompt = jest.fn();
 global.alert = jest.fn();
+global.requestAnimationFrame = (cb) => cb();
 
 const DVSAAutomation = require('./main');
 
@@ -58,6 +60,32 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(spySetTimeout).toHaveBeenCalled();
         jest.runAllTimers();
         expect(callback).toHaveBeenCalled();
+    });
+
+    test('showToast creates and removes toast element', () => {
+        const message = 'Test Toast';
+        const duration = 1000;
+
+        DVSAAutomation.showToast(message, duration);
+
+        expect(document.createElement).toHaveBeenCalledWith('div');
+        expect(document.body.appendChild).toHaveBeenCalled();
+
+        // Check if toast was created with correct text
+        const toast = document.createElement.mock.results[0].value;
+        expect(toast.textContent).toBe(message);
+
+        // Fast-forward time to trigger removal
+        jest.advanceTimersByTime(duration);
+        jest.advanceTimersByTime(500); // fade out time
+
+        // Mock document.body.contains to return true so removal logic runs
+        document.body.contains = jest.fn().mockReturnValue(true);
+
+        // Since we are inside nested setTimeout, we need to run pending timers again
+        jest.runAllTimers();
+
+        expect(document.body.removeChild).toHaveBeenCalledWith(toast);
     });
 
     test('step1 clicks car test button if it exists', () => {
@@ -188,13 +216,18 @@ describe('DVSA Driving Test Booking Automation', () => {
             .mockReturnValueOnce('PS2 4PZ') // Postcode
             .mockReturnValueOnce('123456'); // Instructor
 
+        // Spy on showToast
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+
         DVSAAutomation.configure();
 
         expect(GM_setValue).toHaveBeenCalledWith('drivingLicenceNumber', 'ABCDE12345FGHIJ6');
         expect(GM_setValue).toHaveBeenCalledWith('testDate', '15/08/2024');
         expect(GM_setValue).toHaveBeenCalledWith('postcode', 'PS2 4PZ');
         expect(GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', '123456');
-        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Configuration saved'));
+
+        // Expect showToast to be called instead of alert
+        expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Configuration saved'));
     });
 
     test('configure rejects invalid inputs', () => {
