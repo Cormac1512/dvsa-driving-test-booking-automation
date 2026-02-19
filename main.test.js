@@ -261,4 +261,22 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         expect(GM_setValue).not.toHaveBeenCalled();
     });
+
+    test('init calls handlePage immediately on load (optimization)', () => {
+        const spyHandlePage = jest.spyOn(DVSAAutomation, 'handlePage');
+        const spyRandomDelay = jest.spyOn(DVSAAutomation, 'randomDelay');
+
+        DVSAAutomation.init();
+
+        // Trigger load
+        const loadCallback = global.window.addEventListener.mock.calls.find(call => call[0] === 'load')[1];
+        if (loadCallback) {
+            loadCallback();
+        }
+
+        // With optimization, handlePage should be called immediately
+        expect(spyHandlePage).toHaveBeenCalled();
+        // And it should NOT go through randomDelay (for the init call)
+        expect(spyRandomDelay).not.toHaveBeenCalledWith(DVSAAutomation.handlePage);
+    });
 });

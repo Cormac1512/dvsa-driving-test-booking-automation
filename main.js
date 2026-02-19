@@ -252,7 +252,7 @@ const DVSAAutomation = (function () {
         init() {
             // Ensure the script runs after the page is fully loaded
             window.addEventListener('load', () => {
-                app.randomDelay(app.handlePage);
+                app.handlePage();
             });
         }
     };
