@@ -198,6 +198,22 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(DVSAAutomation.isValidLicence('INVALID-CHARS!!')).toBe(false);
     });
 
+    test('isValidPostcode validates UK postcode format', () => {
+        expect(DVSAAutomation.isValidPostcode('SW1A 1AA')).toBe(true);
+        expect(DVSAAutomation.isValidPostcode('M1 1AA')).toBe(true);
+        expect(DVSAAutomation.isValidPostcode('CR2 6XH')).toBe(true);
+        expect(DVSAAutomation.isValidPostcode('sw1a 1aa')).toBe(true);
+        expect(DVSAAutomation.isValidPostcode('Invalid')).toBe(false);
+        expect(DVSAAutomation.isValidPostcode('12345')).toBe(false);
+    });
+
+    test('isValidInstructor validates numeric input', () => {
+        expect(DVSAAutomation.isValidInstructor('123456')).toBe(true);
+        expect(DVSAAutomation.isValidInstructor('01234')).toBe(true);
+        expect(DVSAAutomation.isValidInstructor('ABC')).toBe(false);
+        expect(DVSAAutomation.isValidInstructor('123A')).toBe(false);
+    });
+
     test('isValidDate validates format and date validity', () => {
         expect(DVSAAutomation.isValidDate('15/08/2024')).toBe(true);
         expect(DVSAAutomation.isValidDate('29/02/2024')).toBe(true); // Leap year
@@ -236,8 +252,8 @@ describe('DVSA Driving Test Booking Automation', () => {
         prompt
              .mockReturnValueOnce('INVALID_LICENCE') // Licence
              .mockReturnValueOnce('INVALID_DATE')    // Date
-             .mockReturnValueOnce('POSTCODE')        // Postcode
-             .mockReturnValueOnce('INSTRUCTOR');     // Instructor
+             .mockReturnValueOnce('INVALID_POSTCODE') // Postcode
+             .mockReturnValueOnce('INVALID_INSTRUCTOR'); // Instructor
 
         DVSAAutomation.configure();
 
@@ -247,9 +263,24 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(GM_setValue).not.toHaveBeenCalledWith('testDate', expect.anything());
         expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Date'));
 
-        // Postcode and Instructor are still saved
-        expect(GM_setValue).toHaveBeenCalledWith('postcode', 'POSTCODE');
-        expect(GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', 'INSTRUCTOR');
+        expect(GM_setValue).not.toHaveBeenCalledWith('postcode', expect.anything());
+        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Postcode'));
+
+        expect(GM_setValue).not.toHaveBeenCalledWith('instructorReferenceNumber', expect.anything());
+        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Instructor Reference Number'));
+    });
+
+    test('configure saves valid inputs with empty instructor', () => {
+        GM_getValue.mockReturnValue('CURRENT_VAL');
+        prompt
+            .mockReturnValueOnce('ABCDE12345FGHIJ6') // Valid Licence
+            .mockReturnValueOnce('15/08/2024') // Valid Date
+            .mockReturnValueOnce('PS2 4PZ') // Valid Postcode
+            .mockReturnValueOnce(''); // Empty Instructor
+
+        DVSAAutomation.configure();
+
+        expect(GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', '');
     });
 
     test('configure handles cancelled prompts', () => {

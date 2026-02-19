@@ -52,6 +52,14 @@ const DVSAAutomation = (function () {
             return /^[a-zA-Z0-9]{16}$/.test(licence);
         },
 
+        isValidPostcode(postcode) {
+            return /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i.test(postcode);
+        },
+
+        isValidInstructor(instructor) {
+            return /^\d+$/.test(instructor);
+        },
+
         isValidDate(dateString) {
             const regex = /^\d{2}\/\d{2}\/\d{4}$/;
             if (!regex.test(dateString)) return false;
@@ -92,11 +100,23 @@ const DVSAAutomation = (function () {
 
             const currentPostcode = getValue('postcode', DEFAULT_POSTCODE);
             const newPostcode = prompt("Enter Postcode:", currentPostcode);
-            if (newPostcode !== null) setValue('postcode', newPostcode);
+            if (newPostcode !== null) {
+                if (app.isValidPostcode(newPostcode)) {
+                    setValue('postcode', newPostcode);
+                } else {
+                    alert("Invalid Postcode! Format should be valid UK Postcode.");
+                }
+            }
 
             const currentInstructor = getValue('instructorReferenceNumber', DEFAULT_INSTRUCTOR);
             const newInstructor = prompt("Enter Instructor Reference Number (Optional):", currentInstructor);
-            if (newInstructor !== null) setValue('instructorReferenceNumber', newInstructor);
+            if (newInstructor !== null) {
+                if (newInstructor === '' || app.isValidInstructor(newInstructor)) {
+                    setValue('instructorReferenceNumber', newInstructor);
+                } else {
+                    alert("Invalid Instructor Reference Number! It should be a numeric value.");
+                }
+            }
 
             app.showToast("Configuration saved. Please reload the page.");
         },
