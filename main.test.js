@@ -23,7 +23,8 @@ global.window = {
     location: { href: '' }
 };
 global.console = {
-    log: jest.fn()
+    log: jest.fn(),
+    warn: jest.fn()
 };
 global.GM_setValue = jest.fn();
 global.GM_getValue = jest.fn();
@@ -318,5 +319,48 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         expect(spyHandlePage).toHaveBeenCalled();
         expect(global.document.addEventListener).not.toHaveBeenCalledWith('DOMContentLoaded', expect.any(Function));
+    });
+
+    describe('Configuration Loading', () => {
+        beforeEach(() => {
+            jest.resetModules();
+            jest.clearAllMocks();
+        });
+
+        test('loads valid configuration from storage', () => {
+            global.GM_getValue.mockImplementation((key) => {
+                if (key === 'drivingLicenceNumber') return 'ABCDE12345FGHIJ6';
+                if (key === 'testDate') return '01/01/2025';
+                if (key === 'postcode') return 'SW1A 1AA';
+                if (key === 'instructorReferenceNumber') return '123456';
+                return null;
+            });
+
+            const DVSAAutomation = require('./main');
+            expect(DVSAAutomation.drivingLicenceNumber).toBe('ABCDE12345FGHIJ6');
+            expect(DVSAAutomation.testDate).toBe('01/01/2025');
+            expect(DVSAAutomation.postcode).toBe('SW1A 1AA');
+            expect(DVSAAutomation.instructorReferenceNumber).toBe('123456');
+        });
+
+        test('falls back to defaults for invalid configuration', () => {
+            global.GM_getValue.mockImplementation((key) => {
+                if (key === 'drivingLicenceNumber') return 'INVALID';
+                if (key === 'testDate') return 'INVALID';
+                if (key === 'postcode') return 'INVALID';
+                if (key === 'instructorReferenceNumber') return 'INVALID';
+                return null;
+            });
+
+            const spyWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+            const DVSAAutomation = require('./main');
+            expect(DVSAAutomation.drivingLicenceNumber).toBe('Your_Driver_Licence_Here');
+            expect(DVSAAutomation.testDate).toBe('15/08/2024');
+            expect(DVSAAutomation.postcode).toBe('PS2 4PZ');
+            expect(DVSAAutomation.instructorReferenceNumber).toBe('');
+
+            expect(spyWarn).toHaveBeenCalledTimes(4); // One for each invalid field
+        });
     });
 });
