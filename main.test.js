@@ -94,7 +94,7 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         DVSAAutomation.step1();
 
-        expect(document.querySelector).toHaveBeenCalledWith('#test-type-car');
+        expect(document.querySelector).toHaveBeenCalledWith(DVSAAutomation.SELECTORS.TEST_TYPE_CAR);
         expect(mockBtn.click).toHaveBeenCalled();
     });
 
@@ -104,9 +104,9 @@ describe('DVSA Driving Test Booking Automation', () => {
         const mockSubmitBtn = { click: jest.fn() };
 
         document.querySelector.mockImplementation((selector) => {
-            if (selector === '#driving-licence') return mockLicenceInput;
-            if (selector === '#special-needs-none') return mockSpecialNeedsInput;
-            if (selector === '#driving-licence-submit') return mockSubmitBtn;
+            if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_INPUT) return mockLicenceInput;
+            if (selector === DVSAAutomation.SELECTORS.SPECIAL_NEEDS_NONE) return mockSpecialNeedsInput;
+            if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
             return null;
         });
 
@@ -123,9 +123,9 @@ describe('DVSA Driving Test Booking Automation', () => {
         const mockSubmitBtn = { click: jest.fn() };
 
         document.querySelector.mockImplementation((selector) => {
-            if (selector === '#test-choice-calendar') return mockDateInput;
-            if (selector === '#instructor-prn') return mockInstructorInput;
-            if (selector === '#driving-licence-submit') return mockSubmitBtn;
+            if (selector === DVSAAutomation.SELECTORS.TEST_DATE_INPUT) return mockDateInput;
+            if (selector === DVSAAutomation.SELECTORS.INSTRUCTOR_INPUT) return mockInstructorInput;
+            if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
             return null;
         });
 
@@ -143,8 +143,8 @@ describe('DVSA Driving Test Booking Automation', () => {
         const mockSubmitBtn = { click: jest.fn() };
 
         document.querySelector.mockImplementation((selector) => {
-            if (selector === '#test-centres-input') return mockPostcodeInput;
-            if (selector === '#test-centres-submit') return mockSubmitBtn;
+            if (selector === DVSAAutomation.SELECTORS.POSTCODE_INPUT) return mockPostcodeInput;
+            if (selector === DVSAAutomation.SELECTORS.POSTCODE_SUBMIT) return mockSubmitBtn;
             return null;
         });
 
@@ -159,8 +159,8 @@ describe('DVSA Driving Test Booking Automation', () => {
         const mockFetchBtn = { click: jest.fn() };
 
         document.querySelector.mockImplementation((selector) => {
-            if (selector === '.test-centre-results') return mockResults;
-            if (selector === '#fetch-more-centres') return mockFetchBtn;
+            if (selector === DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS) return mockResults;
+            if (selector === DVSAAutomation.SELECTORS.FETCH_MORE_CENTRES) return mockFetchBtn;
             return null;
         });
 

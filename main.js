@@ -48,6 +48,19 @@ const DVSAAutomation = (function () {
         minDelay,
         maxDelay,
 
+        SELECTORS: {
+            TEST_TYPE_CAR: '#test-type-car',
+            DRIVING_LICENCE_INPUT: '#driving-licence',
+            SPECIAL_NEEDS_NONE: '#special-needs-none',
+            DRIVING_LICENCE_SUBMIT: '#driving-licence-submit',
+            TEST_DATE_INPUT: '#test-choice-calendar',
+            INSTRUCTOR_INPUT: '#instructor-prn',
+            POSTCODE_INPUT: '#test-centres-input',
+            POSTCODE_SUBMIT: '#test-centres-submit',
+            TEST_CENTRE_RESULTS: '.test-centre-results',
+            FETCH_MORE_CENTRES: '#fetch-more-centres'
+        },
+
         isValidLicence(licence) {
             return /^[a-zA-Z0-9]{16}$/.test(licence);
         },
@@ -162,7 +175,7 @@ const DVSAAutomation = (function () {
         step1() {
             console.log('Running step 1...');
             app.showToast('Selecting test type...');
-            const testTypeCarBtn = document.querySelector('#test-type-car');
+            const testTypeCarBtn = document.querySelector(app.SELECTORS.TEST_TYPE_CAR);
             if (testTypeCarBtn) {
                 testTypeCarBtn.click();
             }
@@ -171,17 +184,17 @@ const DVSAAutomation = (function () {
         step2() {
             console.log('Running step 2...');
             app.showToast('Entering licence details...');
-            const drivingLicenceInput = document.querySelector('#driving-licence');
+            const drivingLicenceInput = document.querySelector(app.SELECTORS.DRIVING_LICENCE_INPUT);
             if (drivingLicenceInput) {
                 drivingLicenceInput.value = app.drivingLicenceNumber;
             }
 
-            const specialNeedsNoneInput = document.querySelector('#special-needs-none');
+            const specialNeedsNoneInput = document.querySelector(app.SELECTORS.SPECIAL_NEEDS_NONE);
             if (specialNeedsNoneInput) {
                 specialNeedsNoneInput.checked = true;
             }
 
-            const submitBtn = document.querySelector('#driving-licence-submit');
+            const submitBtn = document.querySelector(app.SELECTORS.DRIVING_LICENCE_SUBMIT);
             if (submitBtn) {
                 submitBtn.click();
             }
@@ -190,19 +203,19 @@ const DVSAAutomation = (function () {
         step3() {
             console.log('Running step 3...');
             app.showToast('Entering test date...');
-            const testDateInput = document.querySelector('#test-choice-calendar');
+            const testDateInput = document.querySelector(app.SELECTORS.TEST_DATE_INPUT);
             if (testDateInput) {
                 testDateInput.value = app.testDate;
             }
 
             if (app.instructorReferenceNumber !== null && app.instructorReferenceNumber !== '') {
-                const instructorInput = document.querySelector('#instructor-prn');
+                const instructorInput = document.querySelector(app.SELECTORS.INSTRUCTOR_INPUT);
                 if (instructorInput) {
                     instructorInput.value = app.instructorReferenceNumber;
                 }
             }
 
-            const submitBtn = document.querySelector('#driving-licence-submit');
+            const submitBtn = document.querySelector(app.SELECTORS.DRIVING_LICENCE_SUBMIT);
             if (submitBtn) {
                 submitBtn.click();
             }
@@ -211,12 +224,12 @@ const DVSAAutomation = (function () {
         step4() {
             console.log('Running step 4...');
             app.showToast('Entering postcode...');
-            const postcodeInput = document.querySelector('#test-centres-input');
+            const postcodeInput = document.querySelector(app.SELECTORS.POSTCODE_INPUT);
             if (postcodeInput) {
                 postcodeInput.value = app.postcode;
             }
 
-            const submitBtn = document.querySelector('#test-centres-submit');
+            const submitBtn = document.querySelector(app.SELECTORS.POSTCODE_SUBMIT);
             if (submitBtn) {
                 submitBtn.click();
             }
@@ -224,19 +237,19 @@ const DVSAAutomation = (function () {
 
         step5() {
             console.log('Running step 5...');
-            const results = document.querySelector('.test-centre-results');
+            const results = document.querySelector(app.SELECTORS.TEST_CENTRE_RESULTS);
 
             if (!results) {
                 console.log('Entering postcode and searching for test centers...');
                 app.showToast('Searching for test centres...');
-                document.querySelector('#test-centres-input').value = app.postcode;
-                document.querySelector('#test-centres-submit').click();
+                document.querySelector(app.SELECTORS.POSTCODE_INPUT).value = app.postcode;
+                document.querySelector(app.SELECTORS.POSTCODE_SUBMIT).click();
             } else {
                 console.log('Checking number of test centers found...');
                 app.showToast('Checking results...');
                 if (results.children.length < app.nearestNumOfCentres) {
                     app.showToast('Fetching more centres...');
-                    document.querySelector('#fetch-more-centres').click();
+                    document.querySelector(app.SELECTORS.FETCH_MORE_CENTRES).click();
                 }
 
                 // Sleep and search again
