@@ -26,15 +26,57 @@ const DVSAAutomation = (function () {
         }
     }
 
+    // Validation functions
+    function isValidLicence(licence) {
+        return /^[a-zA-Z0-9]{16}$/.test(licence);
+    }
+
+    function isValidPostcode(postcode) {
+        return /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i.test(postcode);
+    }
+
+    function isValidInstructor(instructor) {
+        return /^\d+$/.test(instructor);
+    }
+
+    function isValidDate(dateString) {
+        const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+        if (!regex.test(dateString)) return false;
+        const [day, month, year] = dateString.split('/').map(Number);
+        const date = new Date(year, month - 1, day);
+        return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
+    }
+
     const DEFAULT_LICENCE = 'Your_Driver_Licence_Here';
     const DEFAULT_DATE = '15/08/2024';
     const DEFAULT_POSTCODE = 'PS2 4PZ';
     const DEFAULT_INSTRUCTOR = '';
 
-    const drivingLicenceNumber = getValue('drivingLicenceNumber', DEFAULT_LICENCE); // Set to your driver licence
-    const testDate = getValue('testDate', DEFAULT_DATE); // Set your desired test date, format in DD/MM/YYYY
-    const postcode = getValue('postcode', DEFAULT_POSTCODE); // Set your postcode
-    const instructorReferenceNumber = getValue('instructorReferenceNumber', DEFAULT_INSTRUCTOR); // Set to the instructor's reference number or leave as null if not applicable
+    // Load and validate configuration
+    let drivingLicenceNumber = getValue('drivingLicenceNumber', DEFAULT_LICENCE);
+    if (!isValidLicence(drivingLicenceNumber)) {
+        console.warn('Invalid driving licence number in storage. Using default.');
+        drivingLicenceNumber = DEFAULT_LICENCE;
+    }
+
+    let testDate = getValue('testDate', DEFAULT_DATE);
+    if (!isValidDate(testDate)) {
+        console.warn('Invalid test date in storage. Using default.');
+        testDate = DEFAULT_DATE;
+    }
+
+    let postcode = getValue('postcode', DEFAULT_POSTCODE);
+    if (!isValidPostcode(postcode)) {
+        console.warn('Invalid postcode in storage. Using default.');
+        postcode = DEFAULT_POSTCODE;
+    }
+
+    let instructorReferenceNumber = getValue('instructorReferenceNumber', DEFAULT_INSTRUCTOR);
+    if (instructorReferenceNumber !== '' && !isValidInstructor(instructorReferenceNumber)) {
+        console.warn('Invalid instructor reference number in storage. Using default.');
+        instructorReferenceNumber = DEFAULT_INSTRUCTOR;
+    }
+
     const nearestNumOfCentres = 12; // Number of test centres to find
     const minDelay = 2000; // Minimum delay in milliseconds
     const maxDelay = 4000; // Maximum delay in milliseconds
@@ -61,25 +103,10 @@ const DVSAAutomation = (function () {
             FETCH_MORE_CENTRES: '#fetch-more-centres'
         },
 
-        isValidLicence(licence) {
-            return /^[a-zA-Z0-9]{16}$/.test(licence);
-        },
-
-        isValidPostcode(postcode) {
-            return /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i.test(postcode);
-        },
-
-        isValidInstructor(instructor) {
-            return /^\d+$/.test(instructor);
-        },
-
-        isValidDate(dateString) {
-            const regex = /^\d{2}\/\d{2}\/\d{4}$/;
-            if (!regex.test(dateString)) return false;
-            const [day, month, year] = dateString.split('/').map(Number);
-            const date = new Date(year, month - 1, day);
-            return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
-        },
+        isValidLicence,
+        isValidPostcode,
+        isValidInstructor,
+        isValidDate,
 
         randomIntBetween(min, max) {
             return Math.floor(Math.random() * (max - min + 1)) + min;
