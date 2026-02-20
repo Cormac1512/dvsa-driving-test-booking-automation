@@ -15,7 +15,8 @@ global.document = {
     querySelector: jest.fn(),
     addEventListener: jest.fn(),
     title: '',
-    location: { href: '' }
+    location: { href: '' },
+    readyState: 'loading'
 };
 global.window = {
     addEventListener: jest.fn(),
@@ -293,21 +294,29 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(GM_setValue).not.toHaveBeenCalled();
     });
 
-    test('init calls handlePage immediately on load (optimization)', () => {
+    test('init calls handlePage on DOMContentLoaded when loading (optimization)', () => {
+        global.document.readyState = 'loading';
         const spyHandlePage = jest.spyOn(DVSAAutomation, 'handlePage');
-        const spyRandomDelay = jest.spyOn(DVSAAutomation, 'randomDelay');
 
         DVSAAutomation.init();
 
-        // Trigger load
-        const loadCallback = global.window.addEventListener.mock.calls.find(call => call[0] === 'load')[1];
-        if (loadCallback) {
-            loadCallback();
-        }
+        // Should listen for DOMContentLoaded
+        expect(global.document.addEventListener).toHaveBeenCalledWith('DOMContentLoaded', expect.any(Function));
 
-        // With optimization, handlePage should be called immediately
+        // Simulate DOMContentLoaded
+        const domLoadedCallback = global.document.addEventListener.mock.calls.find(call => call[0] === 'DOMContentLoaded')[1];
+        domLoadedCallback();
+
         expect(spyHandlePage).toHaveBeenCalled();
-        // And it should NOT go through randomDelay (for the init call)
-        expect(spyRandomDelay).not.toHaveBeenCalledWith(DVSAAutomation.handlePage);
+    });
+
+    test('init calls handlePage immediately when readyState is complete', () => {
+        global.document.readyState = 'complete';
+        const spyHandlePage = jest.spyOn(DVSAAutomation, 'handlePage');
+
+        DVSAAutomation.init();
+
+        expect(spyHandlePage).toHaveBeenCalled();
+        expect(global.document.addEventListener).not.toHaveBeenCalledWith('DOMContentLoaded', expect.any(Function));
     });
 });

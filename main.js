@@ -283,10 +283,12 @@ const DVSAAutomation = (function () {
         },
 
         init() {
-            // Ensure the script runs after the page is fully loaded
-            window.addEventListener('load', () => {
+            // Ensure the script runs after the DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', app.handlePage);
+            } else {
                 app.handlePage();
-            });
+            }
         }
     };
 
