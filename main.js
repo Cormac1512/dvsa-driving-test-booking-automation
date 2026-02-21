@@ -109,6 +109,12 @@ const DVSAAutomation = (function () {
         isValidDate,
 
         randomIntBetween(min, max) {
+            if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+                const range = max - min + 1;
+                const array = new Uint32Array(1);
+                window.crypto.getRandomValues(array);
+                return min + (array[0] % range);
+            }
             return Math.floor(Math.random() * (max - min + 1)) + min;
         },
 
@@ -119,8 +125,9 @@ const DVSAAutomation = (function () {
 
         configure() {
             const currentLicence = getValue('drivingLicenceNumber', DEFAULT_LICENCE);
-            const newLicence = prompt("Enter Driving Licence Number:", currentLicence);
+            let newLicence = prompt("Enter Driving Licence Number:", currentLicence);
             if (newLicence !== null) {
+                newLicence = newLicence.trim();
                 if (app.isValidLicence(newLicence)) {
                     setValue('drivingLicenceNumber', newLicence);
                 } else {
@@ -129,8 +136,9 @@ const DVSAAutomation = (function () {
             }
 
             const currentDate = getValue('testDate', DEFAULT_DATE);
-            const newDate = prompt("Enter Test Date (DD/MM/YYYY):", currentDate);
+            let newDate = prompt("Enter Test Date (DD/MM/YYYY):", currentDate);
             if (newDate !== null) {
+                newDate = newDate.trim();
                 if (app.isValidDate(newDate)) {
                     setValue('testDate', newDate);
                 } else {
@@ -139,8 +147,9 @@ const DVSAAutomation = (function () {
             }
 
             const currentPostcode = getValue('postcode', DEFAULT_POSTCODE);
-            const newPostcode = prompt("Enter Postcode:", currentPostcode);
+            let newPostcode = prompt("Enter Postcode:", currentPostcode);
             if (newPostcode !== null) {
+                newPostcode = newPostcode.trim();
                 if (app.isValidPostcode(newPostcode)) {
                     setValue('postcode', newPostcode);
                 } else {
@@ -149,8 +158,9 @@ const DVSAAutomation = (function () {
             }
 
             const currentInstructor = getValue('instructorReferenceNumber', DEFAULT_INSTRUCTOR);
-            const newInstructor = prompt("Enter Instructor Reference Number (Optional):", currentInstructor);
+            let newInstructor = prompt("Enter Instructor Reference Number (Optional):", currentInstructor);
             if (newInstructor !== null) {
+                newInstructor = newInstructor.trim();
                 if (newInstructor === '' || app.isValidInstructor(newInstructor)) {
                     setValue('instructorReferenceNumber', newInstructor);
                 } else {

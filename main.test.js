@@ -20,7 +20,8 @@ global.document = {
 };
 global.window = {
     addEventListener: jest.fn(),
-    location: { href: '' }
+    location: { href: '' },
+    crypto: { getRandomValues: jest.fn() }
 };
 global.console = {
     log: jest.fn(),
@@ -53,6 +54,22 @@ describe('DVSA Driving Test Booking Automation', () => {
             expect(result).toBeLessThanOrEqual(max);
             expect(Number.isInteger(result)).toBe(true);
         }
+    });
+
+    test('randomIntBetween uses crypto when available', () => {
+        const mockGetRandomValues = jest.fn((array) => {
+            array[0] = 12345;
+            return array;
+        });
+        global.window.crypto.getRandomValues = mockGetRandomValues;
+
+        const min = 10;
+        const max = 20;
+        const result = DVSAAutomation.randomIntBetween(min, max);
+
+        expect(mockGetRandomValues).toHaveBeenCalled();
+        expect(result).toBeGreaterThanOrEqual(min);
+        expect(result).toBeLessThanOrEqual(max);
     });
 
     test('randomDelay calls callback after timeout', () => {
@@ -310,6 +327,27 @@ describe('DVSA Driving Test Booking Automation', () => {
         DVSAAutomation.configure();
 
         expect(GM_setValue).not.toHaveBeenCalled();
+    });
+
+    test('configure trims whitespace from inputs', () => {
+        GM_getValue.mockReturnValue('CURRENT_VAL');
+        prompt.mockReset();
+        prompt
+            .mockReturnValueOnce('  ABCDE12345FGHIJ6  ') // Licence with spaces
+            .mockReturnValueOnce('  15/08/2024  ')       // Date with spaces
+            .mockReturnValueOnce('  PS2 4PZ  ')         // Postcode with spaces
+            .mockReturnValueOnce('  123456  ');         // Instructor with spaces
+
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+
+        DVSAAutomation.configure();
+
+        expect(GM_setValue).toHaveBeenCalledWith('drivingLicenceNumber', 'ABCDE12345FGHIJ6');
+        expect(GM_setValue).toHaveBeenCalledWith('testDate', '15/08/2024');
+        expect(GM_setValue).toHaveBeenCalledWith('postcode', 'PS2 4PZ');
+        expect(GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', '123456');
+
+        expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Configuration saved'));
     });
 
     test('init calls handlePage on DOMContentLoaded when loading (optimization)', () => {
