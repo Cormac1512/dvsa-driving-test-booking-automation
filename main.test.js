@@ -90,17 +90,17 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(document.body.removeChild).toHaveBeenCalledWith(toast);
     });
 
-    test('step1 clicks car test button if it exists', () => {
+    test('selectTestType clicks car test button if it exists', () => {
         const mockBtn = { click: jest.fn() };
         document.querySelector.mockReturnValueOnce(mockBtn);
 
-        DVSAAutomation.step1();
+        DVSAAutomation.selectTestType();
 
         expect(document.querySelector).toHaveBeenCalledWith(DVSAAutomation.SELECTORS.TEST_TYPE_CAR);
         expect(mockBtn.click).toHaveBeenCalled();
     });
 
-    test('step2 fills licence and submits', () => {
+    test('enterLicenceDetails fills licence and submits', () => {
         const mockLicenceInput = { value: '' };
         const mockSpecialNeedsInput = { checked: false };
         const mockSubmitBtn = { click: jest.fn() };
@@ -112,14 +112,14 @@ describe('DVSA Driving Test Booking Automation', () => {
             return null;
         });
 
-        DVSAAutomation.step2();
+        DVSAAutomation.enterLicenceDetails();
 
         expect(mockLicenceInput.value).toBe(DVSAAutomation.drivingLicenceNumber);
         expect(mockSpecialNeedsInput.checked).toBe(true);
         expect(mockSubmitBtn.click).toHaveBeenCalled();
     });
 
-    test('step3 fills test date and submits', () => {
+    test('enterTestDate fills test date and submits', () => {
         const mockDateInput = { value: '' };
         const mockInstructorInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
@@ -131,7 +131,7 @@ describe('DVSA Driving Test Booking Automation', () => {
             return null;
         });
 
-        DVSAAutomation.step3();
+        DVSAAutomation.enterTestDate();
 
         expect(mockDateInput.value).toBe(DVSAAutomation.testDate);
         if (DVSAAutomation.instructorReferenceNumber !== '') {
@@ -140,7 +140,7 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(mockSubmitBtn.click).toHaveBeenCalled();
     });
 
-    test('step4 fills postcode and submits', () => {
+    test('enterPostcode fills postcode and submits', () => {
         const mockPostcodeInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
 
@@ -150,13 +150,13 @@ describe('DVSA Driving Test Booking Automation', () => {
             return null;
         });
 
-        DVSAAutomation.step4();
+        DVSAAutomation.enterPostcode();
 
         expect(mockPostcodeInput.value).toBe(DVSAAutomation.postcode);
         expect(mockSubmitBtn.click).toHaveBeenCalled();
     });
 
-    test('step5 handles results and clicks fetch more if needed', () => {
+    test('checkResults handles results and clicks fetch more if needed', () => {
         const mockResults = { children: { length: 5 } };
         const mockFetchBtn = { click: jest.fn() };
 
@@ -166,29 +166,46 @@ describe('DVSA Driving Test Booking Automation', () => {
             return null;
         });
 
-        DVSAAutomation.step5();
+        DVSAAutomation.checkResults();
         expect(mockFetchBtn.click).toHaveBeenCalled();
 
         jest.runAllTimers();
         expect(document.location.href).toBe("https://driverpracticaltest.dvsa.gov.uk/application");
     });
 
-    test('handlePage routes correctly based on document title', () => {
+    test('handlePage routes correctly based on existing elements', () => {
         const spyRandomDelay = jest.spyOn(DVSAAutomation, 'randomDelay');
 
         const testCases = [
-            { title: 'Type of test', step: DVSAAutomation.step1 },
-            { title: 'Licence details', step: DVSAAutomation.step2 },
-            { title: 'Test date', step: DVSAAutomation.step3 },
-            { title: 'Test centre', step: DVSAAutomation.step4 }
+            { selector: DVSAAutomation.SELECTORS.TEST_TYPE_CAR, step: DVSAAutomation.selectTestType },
+            { selector: DVSAAutomation.SELECTORS.DRIVING_LICENCE_INPUT, step: DVSAAutomation.enterLicenceDetails },
+            { selector: DVSAAutomation.SELECTORS.TEST_DATE_INPUT, step: DVSAAutomation.enterTestDate },
+            { selector: DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS, step: DVSAAutomation.checkResults },
+            { selector: DVSAAutomation.SELECTORS.POSTCODE_INPUT, step: DVSAAutomation.enterPostcode }
         ];
 
-        for (const { title, step } of testCases) {
-            document.title = title;
+        for (const { selector, step } of testCases) {
+            document.querySelector.mockImplementation((sel) => sel === selector ? {} : null);
+
             DVSAAutomation.handlePage();
+
             expect(spyRandomDelay).toHaveBeenCalledWith(step);
             spyRandomDelay.mockClear();
         }
+    });
+
+    test('handlePage prioritizes checkResults over enterPostcode if results exist', () => {
+        const spyRandomDelay = jest.spyOn(DVSAAutomation, 'randomDelay');
+
+        document.querySelector.mockImplementation((selector) => {
+            if (selector === DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS) return {};
+            if (selector === DVSAAutomation.SELECTORS.POSTCODE_INPUT) return {}; // Both exist
+            return null;
+        });
+
+        DVSAAutomation.handlePage();
+
+        expect(spyRandomDelay).toHaveBeenCalledWith(DVSAAutomation.checkResults);
     });
 
 
