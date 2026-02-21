@@ -112,9 +112,9 @@ const DVSAAutomation = (function () {
             return Math.floor(Math.random() * (max - min + 1)) + min;
         },
 
-        randomDelay(callback) {
+        randomDelay(callback, ...args) {
             const delay = app.randomIntBetween(app.minDelay, app.maxDelay); // Random delay between minDelay and maxDelay
-            setTimeout(callback, delay);
+            setTimeout(callback, delay, ...args);
         },
 
         configure() {
@@ -199,19 +199,19 @@ const DVSAAutomation = (function () {
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         },
 
-        selectTestType() {
+        selectTestType(element) {
             console.log('Running selectTestType...');
             app.showToast('Selecting test type...');
-            const testTypeCarBtn = document.querySelector(app.SELECTORS.TEST_TYPE_CAR);
+            const testTypeCarBtn = element || document.querySelector(app.SELECTORS.TEST_TYPE_CAR);
             if (testTypeCarBtn) {
                 testTypeCarBtn.click();
             }
         },
 
-        enterLicenceDetails() {
+        enterLicenceDetails(element) {
             console.log('Running enterLicenceDetails...');
             app.showToast('Entering licence details...');
-            const drivingLicenceInput = document.querySelector(app.SELECTORS.DRIVING_LICENCE_INPUT);
+            const drivingLicenceInput = element || document.querySelector(app.SELECTORS.DRIVING_LICENCE_INPUT);
             if (drivingLicenceInput) {
                 drivingLicenceInput.value = app.drivingLicenceNumber;
             }
@@ -227,10 +227,10 @@ const DVSAAutomation = (function () {
             }
         },
 
-        enterTestDate() {
+        enterTestDate(element) {
             console.log('Running enterTestDate...');
             app.showToast('Entering test date...');
-            const testDateInput = document.querySelector(app.SELECTORS.TEST_DATE_INPUT);
+            const testDateInput = element || document.querySelector(app.SELECTORS.TEST_DATE_INPUT);
             if (testDateInput) {
                 testDateInput.value = app.testDate;
             }
@@ -248,10 +248,10 @@ const DVSAAutomation = (function () {
             }
         },
 
-        enterPostcode() {
+        enterPostcode(element) {
             console.log('Running enterPostcode...');
             app.showToast('Entering postcode...');
-            const postcodeInput = document.querySelector(app.SELECTORS.POSTCODE_INPUT);
+            const postcodeInput = element || document.querySelector(app.SELECTORS.POSTCODE_INPUT);
             if (postcodeInput) {
                 postcodeInput.value = app.postcode;
             }
@@ -262,9 +262,9 @@ const DVSAAutomation = (function () {
             }
         },
 
-        checkResults() {
+        checkResults(element) {
             console.log('Running checkResults...');
-            const results = document.querySelector(app.SELECTORS.TEST_CENTRE_RESULTS);
+            const results = element || document.querySelector(app.SELECTORS.TEST_CENTRE_RESULTS);
 
             if (results) {
                 console.log('Checking number of test centers found...');
@@ -288,40 +288,42 @@ const DVSAAutomation = (function () {
             const routes = [
                 {
                     name: 'Step 1: Test Type',
-                    condition: () => document.querySelector(app.SELECTORS.TEST_TYPE_CAR),
+                    selector: app.SELECTORS.TEST_TYPE_CAR,
                     action: app.selectTestType
                 },
                 {
                     name: 'Step 2: Licence Details',
-                    condition: () => document.querySelector(app.SELECTORS.DRIVING_LICENCE_INPUT),
+                    selector: app.SELECTORS.DRIVING_LICENCE_INPUT,
                     action: app.enterLicenceDetails
                 },
                 {
                     name: 'Step 3: Test Date',
-                    condition: () => document.querySelector(app.SELECTORS.TEST_DATE_INPUT),
+                    selector: app.SELECTORS.TEST_DATE_INPUT,
                     action: app.enterTestDate
                 },
                 {
                     name: 'Step 5: Test Centre Results',
-                    condition: () => document.querySelector(app.SELECTORS.TEST_CENTRE_RESULTS),
+                    selector: app.SELECTORS.TEST_CENTRE_RESULTS,
                     action: app.checkResults
                 },
                 {
                     name: 'Step 4: Postcode Search',
-                    condition: () => document.querySelector(app.SELECTORS.POSTCODE_INPUT),
+                    selector: app.SELECTORS.POSTCODE_INPUT,
                     action: app.enterPostcode
                 }
             ];
 
-            const matchedRoute = routes.find(route => route.condition());
-
-            if (matchedRoute) {
-                console.log(`Matched route: ${matchedRoute.name}`);
-                app.randomDelay(matchedRoute.action);
-            } else {
-                console.log('No matching route found for current page.');
-                console.log('Page Title:', document.title);
+            for (const route of routes) {
+                const element = document.querySelector(route.selector);
+                if (element) {
+                    console.log(`Matched route: ${route.name}`);
+                    app.randomDelay(route.action, element);
+                    return;
+                }
             }
+
+            console.log('No matching route found for current page.');
+            console.log('Page Title:', document.title);
         },
 
         init() {

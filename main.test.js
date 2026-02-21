@@ -64,6 +64,15 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(callback).toHaveBeenCalled();
     });
 
+    test('randomDelay calls callback with arguments', () => {
+        const callback = jest.fn();
+        const arg1 = 'test';
+        const arg2 = 123;
+        DVSAAutomation.randomDelay(callback, arg1, arg2);
+        jest.runAllTimers();
+        expect(callback).toHaveBeenCalledWith(arg1, arg2);
+    });
+
     test('showToast creates and removes toast element', () => {
         const message = 'Test Toast';
         const duration = 1000;
@@ -100,6 +109,13 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(mockBtn.click).toHaveBeenCalled();
     });
 
+    test('selectTestType clicks passed element without querySelector', () => {
+        const mockBtn = { click: jest.fn() };
+        DVSAAutomation.selectTestType(mockBtn);
+        expect(document.querySelector).not.toHaveBeenCalled();
+        expect(mockBtn.click).toHaveBeenCalled();
+    });
+
     test('enterLicenceDetails fills licence and submits', () => {
         const mockLicenceInput = { value: '' };
         const mockSpecialNeedsInput = { checked: false };
@@ -117,6 +133,24 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(mockLicenceInput.value).toBe(DVSAAutomation.drivingLicenceNumber);
         expect(mockSpecialNeedsInput.checked).toBe(true);
         expect(mockSubmitBtn.click).toHaveBeenCalled();
+    });
+
+    test('enterLicenceDetails uses passed element without querySelector for input', () => {
+        const mockLicenceInput = { value: '' };
+        const mockSpecialNeedsInput = { checked: false };
+        const mockSubmitBtn = { click: jest.fn() };
+
+        document.querySelector.mockImplementation((selector) => {
+             // Only mock secondary elements, input should be passed
+            if (selector === DVSAAutomation.SELECTORS.SPECIAL_NEEDS_NONE) return mockSpecialNeedsInput;
+            if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+            return null;
+        });
+
+        DVSAAutomation.enterLicenceDetails(mockLicenceInput);
+
+        expect(document.querySelector).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.DRIVING_LICENCE_INPUT);
+        expect(mockLicenceInput.value).toBe(DVSAAutomation.drivingLicenceNumber);
     });
 
     test('enterTestDate fills test date and submits', () => {
@@ -140,6 +174,24 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(mockSubmitBtn.click).toHaveBeenCalled();
     });
 
+    test('enterTestDate uses passed element without querySelector for input', () => {
+        const mockDateInput = { value: '' };
+        const mockInstructorInput = { value: '' };
+        const mockSubmitBtn = { click: jest.fn() };
+
+        document.querySelector.mockImplementation((selector) => {
+             // Only mock secondary elements
+            if (selector === DVSAAutomation.SELECTORS.INSTRUCTOR_INPUT) return mockInstructorInput;
+            if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+            return null;
+        });
+
+        DVSAAutomation.enterTestDate(mockDateInput);
+
+        expect(document.querySelector).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.TEST_DATE_INPUT);
+        expect(mockDateInput.value).toBe(DVSAAutomation.testDate);
+    });
+
     test('enterPostcode fills postcode and submits', () => {
         const mockPostcodeInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
@@ -154,6 +206,22 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         expect(mockPostcodeInput.value).toBe(DVSAAutomation.postcode);
         expect(mockSubmitBtn.click).toHaveBeenCalled();
+    });
+
+    test('enterPostcode uses passed element without querySelector for input', () => {
+        const mockPostcodeInput = { value: '' };
+        const mockSubmitBtn = { click: jest.fn() };
+
+        document.querySelector.mockImplementation((selector) => {
+             // Only mock secondary elements
+            if (selector === DVSAAutomation.SELECTORS.POSTCODE_SUBMIT) return mockSubmitBtn;
+            return null;
+        });
+
+        DVSAAutomation.enterPostcode(mockPostcodeInput);
+
+        expect(document.querySelector).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.POSTCODE_INPUT);
+        expect(mockPostcodeInput.value).toBe(DVSAAutomation.postcode);
     });
 
     test('checkResults handles results and clicks fetch more if needed', () => {
@@ -173,6 +241,22 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(document.location.href).toBe("https://driverpracticaltest.dvsa.gov.uk/application");
     });
 
+    test('checkResults uses passed element without querySelector for results', () => {
+        const mockResults = { children: { length: 5 } };
+        const mockFetchBtn = { click: jest.fn() };
+
+        document.querySelector.mockImplementation((selector) => {
+             // Only mock secondary elements
+            if (selector === DVSAAutomation.SELECTORS.FETCH_MORE_CENTRES) return mockFetchBtn;
+            return null;
+        });
+
+        DVSAAutomation.checkResults(mockResults);
+
+        expect(document.querySelector).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS);
+        expect(mockFetchBtn.click).toHaveBeenCalled();
+    });
+
     test('handlePage routes correctly based on existing elements', () => {
         const spyRandomDelay = jest.spyOn(DVSAAutomation, 'randomDelay');
 
@@ -185,27 +269,31 @@ describe('DVSA Driving Test Booking Automation', () => {
         ];
 
         for (const { selector, step } of testCases) {
-            document.querySelector.mockImplementation((sel) => sel === selector ? {} : null);
+            const mockElement = { };
+            document.querySelector.mockImplementation((sel) => sel === selector ? mockElement : null);
 
             DVSAAutomation.handlePage();
 
-            expect(spyRandomDelay).toHaveBeenCalledWith(step);
+            // Verify randomDelay is called with step function AND the found element
+            expect(spyRandomDelay).toHaveBeenCalledWith(step, mockElement);
             spyRandomDelay.mockClear();
         }
     });
 
     test('handlePage prioritizes checkResults over enterPostcode if results exist', () => {
         const spyRandomDelay = jest.spyOn(DVSAAutomation, 'randomDelay');
+        const mockResults = {};
+        const mockPostcode = {};
 
         document.querySelector.mockImplementation((selector) => {
-            if (selector === DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS) return {};
-            if (selector === DVSAAutomation.SELECTORS.POSTCODE_INPUT) return {}; // Both exist
+            if (selector === DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS) return mockResults;
+            if (selector === DVSAAutomation.SELECTORS.POSTCODE_INPUT) return mockPostcode; // Both exist
             return null;
         });
 
         DVSAAutomation.handlePage();
 
-        expect(spyRandomDelay).toHaveBeenCalledWith(DVSAAutomation.checkResults);
+        expect(spyRandomDelay).toHaveBeenCalledWith(DVSAAutomation.checkResults, mockResults);
     });
 
 
