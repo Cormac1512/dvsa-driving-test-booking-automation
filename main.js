@@ -199,8 +199,8 @@ const DVSAAutomation = (function () {
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         },
 
-        step1() {
-            console.log('Running step 1...');
+        selectTestType() {
+            console.log('Running selectTestType...');
             app.showToast('Selecting test type...');
             const testTypeCarBtn = document.querySelector(app.SELECTORS.TEST_TYPE_CAR);
             if (testTypeCarBtn) {
@@ -208,8 +208,8 @@ const DVSAAutomation = (function () {
             }
         },
 
-        step2() {
-            console.log('Running step 2...');
+        enterLicenceDetails() {
+            console.log('Running enterLicenceDetails...');
             app.showToast('Entering licence details...');
             const drivingLicenceInput = document.querySelector(app.SELECTORS.DRIVING_LICENCE_INPUT);
             if (drivingLicenceInput) {
@@ -227,8 +227,8 @@ const DVSAAutomation = (function () {
             }
         },
 
-        step3() {
-            console.log('Running step 3...');
+        enterTestDate() {
+            console.log('Running enterTestDate...');
             app.showToast('Entering test date...');
             const testDateInput = document.querySelector(app.SELECTORS.TEST_DATE_INPUT);
             if (testDateInput) {
@@ -248,8 +248,8 @@ const DVSAAutomation = (function () {
             }
         },
 
-        step4() {
-            console.log('Running step 4...');
+        enterPostcode() {
+            console.log('Running enterPostcode...');
             app.showToast('Entering postcode...');
             const postcodeInput = document.querySelector(app.SELECTORS.POSTCODE_INPUT);
             if (postcodeInput) {
@@ -262,16 +262,11 @@ const DVSAAutomation = (function () {
             }
         },
 
-        step5() {
-            console.log('Running step 5...');
+        checkResults() {
+            console.log('Running checkResults...');
             const results = document.querySelector(app.SELECTORS.TEST_CENTRE_RESULTS);
 
-            if (!results) {
-                console.log('Entering postcode and searching for test centers...');
-                app.showToast('Searching for test centres...');
-                document.querySelector(app.SELECTORS.POSTCODE_INPUT).value = app.postcode;
-                document.querySelector(app.SELECTORS.POSTCODE_SUBMIT).click();
-            } else {
+            if (results) {
                 console.log('Checking number of test centers found...');
                 app.showToast('Checking results...');
                 if (results.children.length < app.nearestNumOfCentres) {
@@ -290,22 +285,42 @@ const DVSAAutomation = (function () {
         },
 
         handlePage() {
-            switch (document.title) {
-                case 'Type of test':
-                    app.randomDelay(app.step1);
-                    break;
-                case 'Licence details':
-                    app.randomDelay(app.step2);
-                    break;
-                case 'Test date':
-                    app.randomDelay(app.step3);
-                    break;
-                case 'Test centre':
-                    app.randomDelay(app.step4);
-                    break;
-                default:
-                    console.log('Unknown page title:', document.title);
-                    break;
+            const routes = [
+                {
+                    name: 'Step 1: Test Type',
+                    condition: () => document.querySelector(app.SELECTORS.TEST_TYPE_CAR),
+                    action: app.selectTestType
+                },
+                {
+                    name: 'Step 2: Licence Details',
+                    condition: () => document.querySelector(app.SELECTORS.DRIVING_LICENCE_INPUT),
+                    action: app.enterLicenceDetails
+                },
+                {
+                    name: 'Step 3: Test Date',
+                    condition: () => document.querySelector(app.SELECTORS.TEST_DATE_INPUT),
+                    action: app.enterTestDate
+                },
+                {
+                    name: 'Step 5: Test Centre Results',
+                    condition: () => document.querySelector(app.SELECTORS.TEST_CENTRE_RESULTS),
+                    action: app.checkResults
+                },
+                {
+                    name: 'Step 4: Postcode Search',
+                    condition: () => document.querySelector(app.SELECTORS.POSTCODE_INPUT),
+                    action: app.enterPostcode
+                }
+            ];
+
+            const matchedRoute = routes.find(route => route.condition());
+
+            if (matchedRoute) {
+                console.log(`Matched route: ${matchedRoute.name}`);
+                app.randomDelay(matchedRoute.action);
+            } else {
+                console.log('No matching route found for current page.');
+                console.log('Page Title:', document.title);
             }
         },
 
