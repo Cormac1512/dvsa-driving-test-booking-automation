@@ -89,6 +89,8 @@ const DVSAAutomation = (function () {
         nearestNumOfCentres,
         minDelay,
         maxDelay,
+        toastElement: null,
+        toastTimeout: null,
 
         SELECTORS: {
             TEST_TYPE_CAR: '#test-type-car',
@@ -172,34 +174,51 @@ const DVSAAutomation = (function () {
         },
 
         showToast(message, duration = 3000) {
-            const toast = document.createElement('div');
-            toast.textContent = message;
-            toast.style.position = 'fixed';
-            toast.style.bottom = '20px';
-            toast.style.right = '20px';
-            toast.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-            toast.style.color = '#fff';
-            toast.style.padding = '10px 20px';
-            toast.style.borderRadius = '5px';
-            toast.style.zIndex = '10000';
-            toast.style.transition = 'opacity 0.5s ease-in-out';
-            toast.style.opacity = '0';
-            toast.style.fontFamily = 'Arial, sans-serif';
-            toast.style.fontSize = '14px';
+            if (!app.toastElement) {
+                const toast = document.createElement('div');
+                toast.id = 'dvsa-toast';
+                toast.style.position = 'fixed';
+                toast.style.bottom = '20px';
+                toast.style.right = '20px';
+                toast.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                toast.style.color = '#fff';
+                toast.style.padding = '10px 20px';
+                toast.style.borderRadius = '5px';
+                toast.style.zIndex = '10000';
+                toast.style.transition = 'opacity 0.5s ease-in-out';
+                toast.style.opacity = '0';
+                toast.style.fontFamily = 'Arial, sans-serif';
+                toast.style.fontSize = '14px';
+                toast.style.pointerEvents = 'none'; // Allow clicks through initially
+                app.toastElement = toast;
+            }
 
-            document.body.appendChild(toast);
+            const toast = app.toastElement;
+            toast.textContent = message;
+
+            if (!document.body.contains(toast)) {
+                document.body.appendChild(toast);
+            }
+
+            // Clear any pending removal
+            if (app.toastTimeout) {
+                clearTimeout(app.toastTimeout);
+                app.toastTimeout = null;
+            }
 
             // Fade in
             requestAnimationFrame(() => {
                 toast.style.opacity = '1';
             });
 
-            setTimeout(() => {
+            // Schedule removal
+            app.toastTimeout = setTimeout(() => {
                 toast.style.opacity = '0';
-                setTimeout(() => {
+                app.toastTimeout = setTimeout(() => {
                     if (document.body.contains(toast)) {
                         document.body.removeChild(toast);
                     }
+                    app.toastTimeout = null;
                 }, 500);
             }, duration);
         },
