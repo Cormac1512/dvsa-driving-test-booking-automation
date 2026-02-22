@@ -72,6 +72,33 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(result).toBeLessThanOrEqual(max);
     });
 
+    test('randomIntBetween retries on bias rejection', () => {
+        const min = 10;
+        const max = 20;
+        // Range is 11. 2^32 = 4294967296.
+        // 4294967296 % 11 = 4.
+        // limit = 4294967296 - 4 = 4294967292.
+        // Values >= 4294967292 should be rejected.
+
+        const mockGetRandomValues = jest.fn()
+            .mockImplementationOnce((array) => {
+                array[0] = 4294967295; // Should be rejected
+                return array;
+            })
+            .mockImplementationOnce((array) => {
+                array[0] = 12345; // Should be accepted
+                return array;
+            });
+
+        global.window.crypto.getRandomValues = mockGetRandomValues;
+
+        const result = DVSAAutomation.randomIntBetween(min, max);
+
+        expect(mockGetRandomValues).toHaveBeenCalledTimes(2);
+        expect(result).toBeGreaterThanOrEqual(min);
+        expect(result).toBeLessThanOrEqual(max);
+    });
+
     test('randomDelay calls callback after timeout', () => {
         const callback = jest.fn();
         const spySetTimeout = jest.spyOn(global, 'setTimeout');
