@@ -39,6 +39,14 @@ describe('DVSA Driving Test Booking Automation', () => {
     beforeEach(() => {
         jest.useFakeTimers();
         jest.clearAllMocks();
+        // Reset singleton state
+        DVSAAutomation.toastElement = null;
+        if (DVSAAutomation.toastTimeout) {
+            clearTimeout(DVSAAutomation.toastTimeout);
+            DVSAAutomation.toastTimeout = null;
+        }
+        // Reset mock default behavior
+        document.body.contains.mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -91,6 +99,9 @@ describe('DVSA Driving Test Booking Automation', () => {
     });
 
     test('showToast creates and removes toast element', () => {
+        // Mock contains to return false first (for append check), then true (for removal check)
+        document.body.contains.mockReturnValueOnce(false).mockReturnValue(true);
+
         const message = 'Test Toast';
         const duration = 1000;
 
@@ -107,13 +118,40 @@ describe('DVSA Driving Test Booking Automation', () => {
         jest.advanceTimersByTime(duration);
         jest.advanceTimersByTime(500); // fade out time
 
-        // Mock document.body.contains to return true so removal logic runs
-        document.body.contains = jest.fn().mockReturnValue(true);
-
         // Since we are inside nested setTimeout, we need to run pending timers again
         jest.runAllTimers();
 
         expect(document.body.removeChild).toHaveBeenCalledWith(toast);
+    });
+
+    test('showToast reuses existing toast element', () => {
+        // Call 1: Should create and append
+        document.body.contains.mockReturnValueOnce(false).mockReturnValue(true);
+        DVSAAutomation.showToast('Msg 1', 1000);
+
+        expect(document.createElement).toHaveBeenCalledTimes(1);
+        const toast = DVSAAutomation.toastElement;
+        expect(toast.textContent).toBe('Msg 1');
+
+        // Call 2: Should reuse
+        document.body.contains.mockReturnValue(true); // Already in DOM
+        DVSAAutomation.showToast('Msg 2', 1000);
+
+        expect(document.createElement).toHaveBeenCalledTimes(1); // Count remains 1
+        expect(toast.textContent).toBe('Msg 2');
+    });
+
+    test('showToast prevents overlapping by clearing previous timeout', () => {
+        document.body.contains.mockReturnValue(true);
+        const spyClearTimeout = jest.spyOn(global, 'clearTimeout');
+
+        DVSAAutomation.showToast('Msg 1', 1000);
+        const timeout1 = DVSAAutomation.toastTimeout;
+
+        DVSAAutomation.showToast('Msg 2', 1000);
+
+        expect(spyClearTimeout).toHaveBeenCalledWith(timeout1);
+        expect(DVSAAutomation.toastTimeout).not.toBe(timeout1);
     });
 
     test('selectTestType clicks car test button if it exists', () => {
