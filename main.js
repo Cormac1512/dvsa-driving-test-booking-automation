@@ -78,8 +78,17 @@ const DVSAAutomation = (function () {
     }
 
     const nearestNumOfCentres = 12; // Number of test centres to find
-    const minDelay = 2000; // Minimum delay in milliseconds
-    const maxDelay = 4000; // Maximum delay in milliseconds
+    let minDelay = parseInt(getValue('minDelay', 2000), 10);
+    if (isNaN(minDelay)) {
+        console.warn('Invalid minDelay in storage. Using default.');
+        minDelay = 2000;
+    }
+
+    let maxDelay = parseInt(getValue('maxDelay', 4000), 10);
+    if (isNaN(maxDelay)) {
+        console.warn('Invalid maxDelay in storage. Using default.');
+        maxDelay = 4000;
+    }
 
     const app = {
         drivingLicenceNumber,
@@ -108,6 +117,23 @@ const DVSAAutomation = (function () {
         isValidInstructor,
         isValidDate,
 
+        updateSetting(key, promptMsg, validationFn, errorMessage, parser = (val) => val) {
+            const currentValue = app[key];
+            let newValue = prompt(promptMsg, currentValue);
+            if (newValue !== null) {
+                newValue = newValue.trim();
+                if (validationFn(newValue)) {
+                    const parsedValue = parser(newValue);
+                    setValue(key, parsedValue);
+                    app[key] = parsedValue;
+                    return true;
+                } else {
+                    alert(errorMessage);
+                }
+            }
+            return false;
+        },
+
         randomIntBetween(min, max) {
             if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
                 const range = max - min + 1;
@@ -124,49 +150,49 @@ const DVSAAutomation = (function () {
         },
 
         configure() {
-            const currentLicence = getValue('drivingLicenceNumber', DEFAULT_LICENCE);
-            let newLicence = prompt("Enter Driving Licence Number:", currentLicence);
-            if (newLicence !== null) {
-                newLicence = newLicence.trim();
-                if (app.isValidLicence(newLicence)) {
-                    setValue('drivingLicenceNumber', newLicence);
-                } else {
-                    alert("Invalid Licence Number! It should be 16 alphanumeric characters.");
-                }
-            }
+            app.updateSetting(
+                'drivingLicenceNumber',
+                "Enter Driving Licence Number:",
+                app.isValidLicence,
+                "Invalid Licence Number! It should be 16 alphanumeric characters."
+            );
 
-            const currentDate = getValue('testDate', DEFAULT_DATE);
-            let newDate = prompt("Enter Test Date (DD/MM/YYYY):", currentDate);
-            if (newDate !== null) {
-                newDate = newDate.trim();
-                if (app.isValidDate(newDate)) {
-                    setValue('testDate', newDate);
-                } else {
-                    alert("Invalid Date! Format should be DD/MM/YYYY.");
-                }
-            }
+            app.updateSetting(
+                'testDate',
+                "Enter Test Date (DD/MM/YYYY):",
+                app.isValidDate,
+                "Invalid Date! Format should be DD/MM/YYYY."
+            );
 
-            const currentPostcode = getValue('postcode', DEFAULT_POSTCODE);
-            let newPostcode = prompt("Enter Postcode:", currentPostcode);
-            if (newPostcode !== null) {
-                newPostcode = newPostcode.trim();
-                if (app.isValidPostcode(newPostcode)) {
-                    setValue('postcode', newPostcode);
-                } else {
-                    alert("Invalid Postcode! Format should be valid UK Postcode.");
-                }
-            }
+            app.updateSetting(
+                'postcode',
+                "Enter Postcode:",
+                app.isValidPostcode,
+                "Invalid Postcode! Format should be valid UK Postcode."
+            );
 
-            const currentInstructor = getValue('instructorReferenceNumber', DEFAULT_INSTRUCTOR);
-            let newInstructor = prompt("Enter Instructor Reference Number (Optional):", currentInstructor);
-            if (newInstructor !== null) {
-                newInstructor = newInstructor.trim();
-                if (newInstructor === '' || app.isValidInstructor(newInstructor)) {
-                    setValue('instructorReferenceNumber', newInstructor);
-                } else {
-                    alert("Invalid Instructor Reference Number! It should be a numeric value.");
-                }
-            }
+            app.updateSetting(
+                'instructorReferenceNumber',
+                "Enter Instructor Reference Number (Optional):",
+                (val) => val === '' || app.isValidInstructor(val),
+                "Invalid Instructor Reference Number! It should be a numeric value."
+            );
+
+            app.updateSetting(
+                'minDelay',
+                "Enter Minimum Delay (ms):",
+                (val) => !isNaN(val) && parseInt(val, 10) >= 0,
+                "Invalid Delay! It should be a positive number.",
+                (val) => parseInt(val, 10)
+            );
+
+            app.updateSetting(
+                'maxDelay',
+                "Enter Maximum Delay (ms):",
+                (val) => !isNaN(val) && parseInt(val, 10) >= 0,
+                "Invalid Delay! It should be a positive number.",
+                (val) => parseInt(val, 10)
+            );
 
             app.showToast("Configuration saved. Please reload the page.");
         },
