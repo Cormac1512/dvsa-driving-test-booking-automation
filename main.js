@@ -123,83 +123,97 @@ const DVSAAutomation = (function () {
             setTimeout(callback, delay, ...args);
         },
 
+        updateSetting(key, defaultValue, promptMessage, validator, errorMessage) {
+            const currentValue = getValue(key, defaultValue);
+            let newValue = prompt(promptMessage, currentValue);
+            if (newValue !== null) {
+                newValue = newValue.trim();
+                if (validator(newValue)) {
+                    setValue(key, newValue);
+                } else {
+                    alert(errorMessage);
+                }
+            }
+        },
+
         configure() {
-            const currentLicence = getValue('drivingLicenceNumber', DEFAULT_LICENCE);
-            let newLicence = prompt("Enter Driving Licence Number:", currentLicence);
-            if (newLicence !== null) {
-                newLicence = newLicence.trim();
-                if (app.isValidLicence(newLicence)) {
-                    setValue('drivingLicenceNumber', newLicence);
-                } else {
-                    alert("Invalid Licence Number! It should be 16 alphanumeric characters.");
-                }
-            }
+            app.updateSetting(
+                'drivingLicenceNumber',
+                DEFAULT_LICENCE,
+                "Enter Driving Licence Number:",
+                app.isValidLicence,
+                "Invalid Licence Number! It should be 16 alphanumeric characters."
+            );
 
-            const currentDate = getValue('testDate', DEFAULT_DATE);
-            let newDate = prompt("Enter Test Date (DD/MM/YYYY):", currentDate);
-            if (newDate !== null) {
-                newDate = newDate.trim();
-                if (app.isValidDate(newDate)) {
-                    setValue('testDate', newDate);
-                } else {
-                    alert("Invalid Date! Format should be DD/MM/YYYY.");
-                }
-            }
+            app.updateSetting(
+                'testDate',
+                DEFAULT_DATE,
+                "Enter Test Date (DD/MM/YYYY):",
+                app.isValidDate,
+                "Invalid Date! Format should be DD/MM/YYYY."
+            );
 
-            const currentPostcode = getValue('postcode', DEFAULT_POSTCODE);
-            let newPostcode = prompt("Enter Postcode:", currentPostcode);
-            if (newPostcode !== null) {
-                newPostcode = newPostcode.trim();
-                if (app.isValidPostcode(newPostcode)) {
-                    setValue('postcode', newPostcode);
-                } else {
-                    alert("Invalid Postcode! Format should be valid UK Postcode.");
-                }
-            }
+            app.updateSetting(
+                'postcode',
+                DEFAULT_POSTCODE,
+                "Enter Postcode:",
+                app.isValidPostcode,
+                "Invalid Postcode! Format should be valid UK Postcode."
+            );
 
-            const currentInstructor = getValue('instructorReferenceNumber', DEFAULT_INSTRUCTOR);
-            let newInstructor = prompt("Enter Instructor Reference Number (Optional):", currentInstructor);
-            if (newInstructor !== null) {
-                newInstructor = newInstructor.trim();
-                if (newInstructor === '' || app.isValidInstructor(newInstructor)) {
-                    setValue('instructorReferenceNumber', newInstructor);
-                } else {
-                    alert("Invalid Instructor Reference Number! It should be a numeric value.");
-                }
-            }
+            app.updateSetting(
+                'instructorReferenceNumber',
+                DEFAULT_INSTRUCTOR,
+                "Enter Instructor Reference Number (Optional):",
+                (val) => val === '' || app.isValidInstructor(val),
+                "Invalid Instructor Reference Number! It should be a numeric value."
+            );
 
             app.showToast("Configuration saved. Please reload the page.");
         },
 
-        showToast(message, duration = 3000) {
-            const toast = document.createElement('div');
-            toast.textContent = message;
-            toast.style.position = 'fixed';
-            toast.style.bottom = '20px';
-            toast.style.right = '20px';
-            toast.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-            toast.style.color = '#fff';
-            toast.style.padding = '10px 20px';
-            toast.style.borderRadius = '5px';
-            toast.style.zIndex = '10000';
-            toast.style.transition = 'opacity 0.5s ease-in-out';
-            toast.style.opacity = '0';
-            toast.style.fontFamily = 'Arial, sans-serif';
-            toast.style.fontSize = '14px';
+        toastElement: null,
+        toastTimeout: null,
 
-            document.body.appendChild(toast);
+        showToast(message, duration = 3000) {
+            if (this.toastTimeout) {
+                clearTimeout(this.toastTimeout);
+                this.toastTimeout = null;
+            }
+
+            if (!this.toastElement) {
+                this.toastElement = document.createElement('div');
+                this.toastElement.style.position = 'fixed';
+                this.toastElement.style.bottom = '20px';
+                this.toastElement.style.right = '20px';
+                this.toastElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                this.toastElement.style.color = '#fff';
+                this.toastElement.style.padding = '10px 20px';
+                this.toastElement.style.borderRadius = '5px';
+                this.toastElement.style.zIndex = '10000';
+                this.toastElement.style.transition = 'opacity 0.5s ease-in-out';
+                this.toastElement.style.opacity = '0';
+                this.toastElement.style.fontFamily = 'Arial, sans-serif';
+                this.toastElement.style.fontSize = '14px';
+
+                document.body.appendChild(this.toastElement);
+            }
+
+            this.toastElement.textContent = message;
 
             // Fade in
             requestAnimationFrame(() => {
-                toast.style.opacity = '1';
+                this.toastElement.style.opacity = '1';
             });
 
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => {
-                    if (document.body.contains(toast)) {
-                        document.body.removeChild(toast);
+            this.toastTimeout = setTimeout(() => {
+                this.toastElement.style.opacity = '0';
+                this.toastTimeout = setTimeout(() => {
+                    if (this.toastElement && this.toastElement.parentNode) {
+                        this.toastElement.parentNode.removeChild(this.toastElement);
                     }
+                    this.toastElement = null;
+                    this.toastTimeout = null;
                 }, 500);
             }, duration);
         },

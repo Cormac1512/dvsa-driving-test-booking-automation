@@ -39,6 +39,12 @@ describe('DVSA Driving Test Booking Automation', () => {
     beforeEach(() => {
         jest.useFakeTimers();
         jest.clearAllMocks();
+        // Reset toast state
+        DVSAAutomation.toastElement = null;
+        if (DVSAAutomation.toastTimeout) {
+            clearTimeout(DVSAAutomation.toastTimeout);
+        }
+        DVSAAutomation.toastTimeout = null;
     });
 
     afterEach(() => {
@@ -99,21 +105,70 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(document.createElement).toHaveBeenCalledWith('div');
         expect(document.body.appendChild).toHaveBeenCalled();
 
+        // Use the actual toast element stored in app since it's a singleton
+        const toastEl = DVSAAutomation.toastElement;
+        // Mock parentNode for removal
+        toastEl.parentNode = document.body;
+
         // Check if toast was created with correct text
-        const toast = document.createElement.mock.results[0].value;
-        expect(toast.textContent).toBe(message);
+        expect(toastEl.textContent).toBe(message);
 
         // Fast-forward time to trigger removal
         jest.advanceTimersByTime(duration);
         jest.advanceTimersByTime(500); // fade out time
 
-        // Mock document.body.contains to return true so removal logic runs
-        document.body.contains = jest.fn().mockReturnValue(true);
+        expect(document.body.removeChild).toHaveBeenCalledWith(toastEl);
+        expect(DVSAAutomation.toastElement).toBeNull();
+    });
 
-        // Since we are inside nested setTimeout, we need to run pending timers again
-        jest.runAllTimers();
+    test('showToast reuses existing element', () => {
+        const message1 = 'Test 1';
+        DVSAAutomation.showToast(message1, 1000);
 
-        expect(document.body.removeChild).toHaveBeenCalledWith(toast);
+        expect(document.createElement).toHaveBeenCalledTimes(1);
+        const toastEl = DVSAAutomation.toastElement;
+        expect(toastEl.textContent).toBe(message1);
+
+        const message2 = 'Test 2';
+        DVSAAutomation.showToast(message2, 1000);
+
+        expect(document.createElement).toHaveBeenCalledTimes(1); // Should not create new one
+        expect(toastEl.textContent).toBe(message2);
+    });
+
+    test('updateSetting prompts and updates valid value', () => {
+        const key = 'testKey';
+        const defaultValue = 'default';
+        const promptMsg = 'Enter value:';
+        const validator = jest.fn().mockReturnValue(true);
+        const errorMsg = 'Error';
+
+        GM_getValue.mockReturnValue(defaultValue);
+        prompt.mockReturnValue('newValue');
+
+        DVSAAutomation.updateSetting(key, defaultValue, promptMsg, validator, errorMsg);
+
+        expect(GM_getValue).toHaveBeenCalledWith(key, defaultValue);
+        expect(prompt).toHaveBeenCalledWith(promptMsg, defaultValue);
+        expect(validator).toHaveBeenCalledWith('newValue');
+        expect(GM_setValue).toHaveBeenCalledWith(key, 'newValue');
+    });
+
+    test('updateSetting alerts on invalid value', () => {
+        const key = 'testKey';
+        const defaultValue = 'default';
+        const promptMsg = 'Enter value:';
+        const validator = jest.fn().mockReturnValue(false);
+        const errorMsg = 'Error';
+
+        GM_getValue.mockReturnValue(defaultValue);
+        prompt.mockReturnValue('invalidValue');
+
+        DVSAAutomation.updateSetting(key, defaultValue, promptMsg, validator, errorMsg);
+
+        expect(validator).toHaveBeenCalledWith('invalidValue');
+        expect(GM_setValue).not.toHaveBeenCalled();
+        expect(alert).toHaveBeenCalledWith(errorMsg);
     });
 
     test('selectTestType clicks car test button if it exists', () => {
