@@ -56,20 +56,42 @@ describe('DVSA Driving Test Booking Automation', () => {
         }
     });
 
-    test('randomIntBetween uses crypto when available', () => {
+    test('randomIntBetween uses crypto and performs rejection sampling', () => {
+        let callCount = 0;
         const mockGetRandomValues = jest.fn((array) => {
-            array[0] = 12345;
+            // For range = 3 (min=0, max=2), maxValid is 4294967295.
+            if (callCount === 0) {
+                // First call: return a value that should be rejected (>= maxValid)
+                array[0] = 4294967295;
+            } else {
+                // Second call: return a valid value
+                array[0] = 12345;
+            }
+            callCount++;
             return array;
         });
         global.window.crypto.getRandomValues = mockGetRandomValues;
 
-        const min = 10;
-        const max = 20;
+        const min = 0;
+        const max = 2;
         const result = DVSAAutomation.randomIntBetween(min, max);
 
-        expect(mockGetRandomValues).toHaveBeenCalled();
+        expect(mockGetRandomValues).toHaveBeenCalledTimes(2);
         expect(result).toBeGreaterThanOrEqual(min);
         expect(result).toBeLessThanOrEqual(max);
+        expect(result).toBe(0); // 12345 % 3 = 0
+    });
+
+    test('randomIntBetween falls back to Math.random if range is too large', () => {
+        const spyMathRandom = jest.spyOn(Math, 'random');
+
+        // range = 2^32 + 1 (exceeds 32-bit uint)
+        const min = 0;
+        const max = 4294967296;
+
+        DVSAAutomation.randomIntBetween(min, max);
+
+        expect(spyMathRandom).toHaveBeenCalled();
     });
 
     test('randomDelay calls callback after timeout', () => {

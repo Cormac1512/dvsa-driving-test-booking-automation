@@ -109,11 +109,21 @@ const DVSAAutomation = (function () {
         isValidDate,
 
         randomIntBetween(min, max) {
+            // Use rejection sampling to avoid modulo bias
             if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
                 const range = max - min + 1;
-                const array = new Uint32Array(1);
-                window.crypto.getRandomValues(array);
-                return min + (array[0] % range);
+                const maxRange = 4294967296; // 2^32
+                if (range <= maxRange) {
+                    const maxValid = Math.floor(maxRange / range) * range;
+                    const array = new Uint32Array(1);
+                    window.crypto.getRandomValues(array);
+                    let r = array[0];
+                    while (r >= maxValid) {
+                        window.crypto.getRandomValues(array);
+                        r = array[0];
+                    }
+                    return min + (r % range);
+                }
             }
             return Math.floor(Math.random() * (max - min + 1)) + min;
         },
