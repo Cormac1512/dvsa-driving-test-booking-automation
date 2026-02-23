@@ -39,6 +39,11 @@ describe('DVSA Driving Test Booking Automation', () => {
     beforeEach(() => {
         jest.useFakeTimers();
         jest.clearAllMocks();
+        DVSAAutomation.toastElement = null;
+        if (DVSAAutomation.toastTimeout) {
+            clearTimeout(DVSAAutomation.toastTimeout);
+            DVSAAutomation.toastTimeout = null;
+        }
     });
 
     afterEach(() => {
@@ -114,6 +119,27 @@ describe('DVSA Driving Test Booking Automation', () => {
         jest.runAllTimers();
 
         expect(document.body.removeChild).toHaveBeenCalledWith(toast);
+    });
+
+    test('showToast reuses existing toast element', () => {
+        DVSAAutomation.showToast('First Message');
+        const firstToast = DVSAAutomation.toastElement;
+        expect(firstToast).not.toBeNull();
+        expect(firstToast.textContent).toBe('First Message');
+        expect(document.createElement).toHaveBeenCalledTimes(1);
+        expect(document.body.appendChild).toHaveBeenCalledTimes(1);
+
+        DVSAAutomation.showToast('Second Message');
+        const secondToast = DVSAAutomation.toastElement;
+
+        expect(secondToast).toBe(firstToast); // Same element reference
+        expect(secondToast.textContent).toBe('Second Message');
+        expect(document.createElement).toHaveBeenCalledTimes(1); // Still 1
+        // appendChild might be called again if implementation checks !contains,
+        // but here it is already in body, so it should NOT be called again if we check correctly.
+        // The implementation: } else if (!document.body.contains(app.toastElement)) {
+        // Since we didn't remove it, it is in body. So appendChild NOT called again.
+        expect(document.body.appendChild).toHaveBeenCalledTimes(1);
     });
 
     test('selectTestType clicks car test button if it exists', () => {

@@ -89,6 +89,8 @@ const DVSAAutomation = (function () {
         nearestNumOfCentres,
         minDelay,
         maxDelay,
+        toastElement: null,
+        toastTimeout: null,
 
         SELECTORS: {
             TEST_TYPE_CAR: '#test-type-car',
@@ -172,33 +174,41 @@ const DVSAAutomation = (function () {
         },
 
         showToast(message, duration = 3000) {
-            const toast = document.createElement('div');
-            toast.textContent = message;
-            toast.style.position = 'fixed';
-            toast.style.bottom = '20px';
-            toast.style.right = '20px';
-            toast.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-            toast.style.color = '#fff';
-            toast.style.padding = '10px 20px';
-            toast.style.borderRadius = '5px';
-            toast.style.zIndex = '10000';
-            toast.style.transition = 'opacity 0.5s ease-in-out';
-            toast.style.opacity = '0';
-            toast.style.fontFamily = 'Arial, sans-serif';
-            toast.style.fontSize = '14px';
+            if (!this.toastElement) {
+                this.toastElement = document.createElement('div');
+                this.toastElement.style.position = 'fixed';
+                this.toastElement.style.bottom = '20px';
+                this.toastElement.style.right = '20px';
+                this.toastElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                this.toastElement.style.color = '#fff';
+                this.toastElement.style.padding = '10px 20px';
+                this.toastElement.style.borderRadius = '5px';
+                this.toastElement.style.zIndex = '10000';
+                this.toastElement.style.transition = 'opacity 0.5s ease-in-out';
+                this.toastElement.style.opacity = '0';
+                this.toastElement.style.fontFamily = 'Arial, sans-serif';
+                this.toastElement.style.fontSize = '14px';
+                document.body.appendChild(this.toastElement);
+            } else if (!document.body.contains(this.toastElement)) {
+                document.body.appendChild(this.toastElement);
+            }
 
-            document.body.appendChild(toast);
+            this.toastElement.textContent = message;
+
+            if (this.toastTimeout) {
+                clearTimeout(this.toastTimeout);
+            }
 
             // Fade in
             requestAnimationFrame(() => {
-                toast.style.opacity = '1';
+                this.toastElement.style.opacity = '1';
             });
 
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => {
-                    if (document.body.contains(toast)) {
-                        document.body.removeChild(toast);
+            this.toastTimeout = setTimeout(() => {
+                this.toastElement.style.opacity = '0';
+                this.toastTimeout = setTimeout(() => {
+                    if (document.body.contains(this.toastElement)) {
+                        document.body.removeChild(this.toastElement);
                     }
                 }, 500);
             }, duration);
