@@ -5,3 +5,7 @@
 ## 2025-02-12 - Redundant DOM Queries in State Machine
 **Learning:** The `handlePage` function identifies the current step by querying a specific element, but then the action function (e.g., `selectTestType`) re-queries the same element. This double-query pattern is inefficient, especially in a userscript that runs on every page load.
 **Action:** When identifying a step via an element presence check, pass that element directly to the action function to avoid redundant DOM traversals.
+
+## 2025-02-12 - Reusing DOM Elements for Frequent Updates
+**Learning:** The `showToast` function was creating a new DOM element for every message, leading to overlapping text and unnecessary DOM churn when messages were triggered in quick succession (e.g., inside a loop or rapid state changes).
+**Action:** Implemented a singleton pattern for the toast element (`app.toastElement`). Always check if an element exists and reuse it before creating a new one. This also required managing timeouts (`app.toastTimeout`) to prevent premature removal of the reused element.
