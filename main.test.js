@@ -348,13 +348,66 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(DVSAAutomation.isValidDate('invalid')).toBe(false);
     });
 
+    test('updateSetting prompts, validates, and saves', () => {
+        const key = 'testKey';
+        const promptMsg = 'Enter Value:';
+        const errorMsg = 'Invalid!';
+        const validVal = 'valid';
+
+        // Setup initial app state
+        DVSAAutomation[key] = 'initial';
+
+        prompt.mockReturnValueOnce(validVal);
+
+        const validator = jest.fn().mockReturnValue(true);
+
+        const result = DVSAAutomation.updateSetting(key, promptMsg, validator, errorMsg);
+
+        expect(prompt).toHaveBeenCalledWith(promptMsg, 'initial');
+        expect(validator).toHaveBeenCalledWith(validVal);
+        expect(GM_setValue).toHaveBeenCalledWith(key, validVal);
+        expect(DVSAAutomation[key]).toBe(validVal);
+        expect(result).toBe(true);
+    });
+
+    test('updateSetting alerts on invalid input', () => {
+        const key = 'testKey';
+        DVSAAutomation[key] = 'initial';
+
+        prompt.mockReturnValueOnce('invalid');
+        const validator = jest.fn().mockReturnValue(false);
+
+        const result = DVSAAutomation.updateSetting(key, 'msg', validator, 'Error!');
+
+        expect(GM_setValue).not.toHaveBeenCalled();
+        expect(alert).toHaveBeenCalledWith('Error!');
+        expect(DVSAAutomation[key]).toBe('initial');
+        expect(result).toBe(false);
+    });
+
+    test('updateSetting handles parsing', () => {
+        const key = 'testNum';
+        DVSAAutomation[key] = 10;
+
+        prompt.mockReturnValueOnce('20');
+        const validator = jest.fn().mockReturnValue(true);
+        const parser = jest.fn().mockImplementation(val => parseInt(val, 10));
+
+        DVSAAutomation.updateSetting(key, 'msg', validator, 'err', parser);
+
+        expect(GM_setValue).toHaveBeenCalledWith(key, 20);
+        expect(DVSAAutomation[key]).toBe(20);
+    });
+
     test('configure saves valid inputs', () => {
         GM_getValue.mockReturnValue('CURRENT_VAL');
         prompt
             .mockReturnValueOnce('ABCDE12345FGHIJ6') // Valid Licence
             .mockReturnValueOnce('15/08/2024') // Valid Date
             .mockReturnValueOnce('PS2 4PZ') // Postcode
-            .mockReturnValueOnce('123456'); // Instructor
+            .mockReturnValueOnce('123456') // Instructor
+            .mockReturnValueOnce('2000') // Min Delay
+            .mockReturnValueOnce('4000'); // Max Delay
 
         // Spy on showToast
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
@@ -365,6 +418,8 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(GM_setValue).toHaveBeenCalledWith('testDate', '15/08/2024');
         expect(GM_setValue).toHaveBeenCalledWith('postcode', 'PS2 4PZ');
         expect(GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', '123456');
+        expect(GM_setValue).toHaveBeenCalledWith('minDelay', 2000);
+        expect(GM_setValue).toHaveBeenCalledWith('maxDelay', 4000);
 
         // Expect showToast to be called instead of alert
         expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Configuration saved'));
@@ -377,7 +432,9 @@ describe('DVSA Driving Test Booking Automation', () => {
              .mockReturnValueOnce('INVALID_LICENCE') // Licence
              .mockReturnValueOnce('INVALID_DATE')    // Date
              .mockReturnValueOnce('INVALID_POSTCODE') // Postcode
-             .mockReturnValueOnce('INVALID_INSTRUCTOR'); // Instructor
+             .mockReturnValueOnce('INVALID_INSTRUCTOR') // Instructor
+             .mockReturnValueOnce('INVALID_DELAY') // Min Delay
+             .mockReturnValueOnce('INVALID_DELAY'); // Max Delay
 
         DVSAAutomation.configure();
 
@@ -392,6 +449,12 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         expect(GM_setValue).not.toHaveBeenCalledWith('instructorReferenceNumber', expect.anything());
         expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Instructor Reference Number'));
+
+        expect(GM_setValue).not.toHaveBeenCalledWith('minDelay', expect.anything());
+        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay'));
+
+        expect(GM_setValue).not.toHaveBeenCalledWith('maxDelay', expect.anything());
+        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay'));
     });
 
     test('configure saves valid inputs with empty instructor', () => {
@@ -400,11 +463,15 @@ describe('DVSA Driving Test Booking Automation', () => {
             .mockReturnValueOnce('ABCDE12345FGHIJ6') // Valid Licence
             .mockReturnValueOnce('15/08/2024') // Valid Date
             .mockReturnValueOnce('PS2 4PZ') // Valid Postcode
-            .mockReturnValueOnce(''); // Empty Instructor
+            .mockReturnValueOnce('') // Empty Instructor
+            .mockReturnValueOnce('2000') // Min Delay
+            .mockReturnValueOnce('4000'); // Max Delay
 
         DVSAAutomation.configure();
 
         expect(GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', '');
+        expect(GM_setValue).toHaveBeenCalledWith('minDelay', 2000);
+        expect(GM_setValue).toHaveBeenCalledWith('maxDelay', 4000);
     });
 
     test('configure handles cancelled prompts', () => {
@@ -424,7 +491,9 @@ describe('DVSA Driving Test Booking Automation', () => {
             .mockReturnValueOnce('  ABCDE12345FGHIJ6  ') // Licence with spaces
             .mockReturnValueOnce('  15/08/2024  ')       // Date with spaces
             .mockReturnValueOnce('  PS2 4PZ  ')         // Postcode with spaces
-            .mockReturnValueOnce('  123456  ');         // Instructor with spaces
+            .mockReturnValueOnce('  123456  ')          // Instructor with spaces
+            .mockReturnValueOnce('  2000  ')            // Min Delay
+            .mockReturnValueOnce('  4000  ');           // Max Delay
 
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
 
@@ -434,6 +503,8 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(GM_setValue).toHaveBeenCalledWith('testDate', '15/08/2024');
         expect(GM_setValue).toHaveBeenCalledWith('postcode', 'PS2 4PZ');
         expect(GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', '123456');
+        expect(GM_setValue).toHaveBeenCalledWith('minDelay', 2000);
+        expect(GM_setValue).toHaveBeenCalledWith('maxDelay', 4000);
 
         expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Configuration saved'));
     });
@@ -476,6 +547,8 @@ describe('DVSA Driving Test Booking Automation', () => {
                 if (key === 'testDate') return '01/01/2025';
                 if (key === 'postcode') return 'SW1A 1AA';
                 if (key === 'instructorReferenceNumber') return '123456';
+                if (key === 'minDelay') return 3000;
+                if (key === 'maxDelay') return 5000;
                 return null;
             });
 
@@ -484,6 +557,8 @@ describe('DVSA Driving Test Booking Automation', () => {
             expect(DVSAAutomation.testDate).toBe('01/01/2025');
             expect(DVSAAutomation.postcode).toBe('SW1A 1AA');
             expect(DVSAAutomation.instructorReferenceNumber).toBe('123456');
+            expect(DVSAAutomation.minDelay).toBe(3000);
+            expect(DVSAAutomation.maxDelay).toBe(5000);
         });
 
         test('falls back to defaults for invalid configuration', () => {
@@ -492,6 +567,8 @@ describe('DVSA Driving Test Booking Automation', () => {
                 if (key === 'testDate') return 'INVALID';
                 if (key === 'postcode') return 'INVALID';
                 if (key === 'instructorReferenceNumber') return 'INVALID';
+                if (key === 'minDelay') return 'INVALID';
+                if (key === 'maxDelay') return 'INVALID';
                 return null;
             });
 
@@ -502,8 +579,10 @@ describe('DVSA Driving Test Booking Automation', () => {
             expect(DVSAAutomation.testDate).toBe('15/08/2024');
             expect(DVSAAutomation.postcode).toBe('PS2 4PZ');
             expect(DVSAAutomation.instructorReferenceNumber).toBe('');
+            expect(DVSAAutomation.minDelay).toBe(2000);
+            expect(DVSAAutomation.maxDelay).toBe(4000);
 
-            expect(spyWarn).toHaveBeenCalledTimes(4); // One for each invalid field
+            expect(spyWarn).toHaveBeenCalledTimes(6); // One for each invalid field
         });
     });
 });
