@@ -339,6 +339,24 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(mockFetchBtn.click).toHaveBeenCalled();
     });
 
+    test('handlePage initializes and caches routes with checkResults first', () => {
+        // Clear any previous routes
+        DVSAAutomation.routes = null;
+
+        // Mock element to prevent execution loop if needed, though handlePage returns after one match
+        document.querySelector.mockReturnValue(null);
+
+        DVSAAutomation.handlePage();
+
+        expect(DVSAAutomation.routes).toBeDefined();
+        expect(DVSAAutomation.routes.length).toBe(5);
+        expect(DVSAAutomation.routes[0].name).toBe('Step 5: Test Centre Results'); // Verification of reordering
+
+        const cachedRoutes = DVSAAutomation.routes;
+        DVSAAutomation.handlePage();
+        expect(DVSAAutomation.routes).toBe(cachedRoutes); // Verification of caching
+    });
+
     test('handlePage routes correctly based on existing elements', () => {
         const spyRandomDelay = jest.spyOn(DVSAAutomation, 'randomDelay');
 

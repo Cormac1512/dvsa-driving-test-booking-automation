@@ -9,3 +9,7 @@
 ## 2025-02-12 - Reusing DOM Elements for Frequent Updates
 **Learning:** The `showToast` function was creating a new DOM element for every message, leading to overlapping text and unnecessary DOM churn when messages were triggered in quick succession (e.g., inside a loop or rapid state changes).
 **Action:** Implemented a singleton pattern for the toast element (`app.toastElement`). Always check if an element exists and reuse it before creating a new one. This also required managing timeouts (`app.toastTimeout`) to prevent premature removal of the reused element.
+
+## 2025-02-12 - Optimizing Polling Loop Order
+**Learning:** In a polling application, the "results" or "waiting" state is the most frequent. If the state machine checks for setup steps (Step 1, 2, 3) before the results step (Step 5), it wastes CPU and DOM query time on every poll iteration.
+**Action:** Reordered the route definitions to check for the "Test Centre Results" element first. This saves multiple DOM queries per page reload in the polling loop. Also added lazy initialization for the routes array to avoid reallocation.
