@@ -160,6 +160,18 @@ const DVSAAutomation = (function () {
             setTimeout(callback, delay, ...args);
         },
 
+        togglePause() {
+            const isPaused = getValue('isPaused', false);
+            const newStatus = !isPaused;
+            setValue('isPaused', newStatus);
+            if (newStatus) {
+                app.showToast('Automation Paused');
+            } else {
+                app.showToast('Automation Resumed');
+                app.handlePage();
+            }
+        },
+
         configure() {
             app.updateSetting(
                 'drivingLicenceNumber',
@@ -349,6 +361,11 @@ const DVSAAutomation = (function () {
         },
 
         handlePage() {
+            if (getValue('isPaused', false)) {
+                app.showToast('Automation is paused');
+                return;
+            }
+
             const routes = [
                 {
                     name: 'Step 1: Test Type',
@@ -402,6 +419,7 @@ const DVSAAutomation = (function () {
 
     if (typeof GM_registerMenuCommand !== 'undefined') {
         GM_registerMenuCommand("Configure Script", app.configure);
+        GM_registerMenuCommand("Toggle Automation", app.togglePause);
     }
 
     if (typeof module === 'undefined') {
