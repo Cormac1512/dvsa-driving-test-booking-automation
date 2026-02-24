@@ -200,6 +200,7 @@ describe('DVSA Driving Test Booking Automation', () => {
     });
 
     test('enterLicenceDetails fills licence and submits', () => {
+        DVSAAutomation.drivingLicenceNumber = 'ABCDE12345FGHIJ6'; // Ensure valid licence
         const mockLicenceInput = { value: '' };
         const mockSpecialNeedsInput = { checked: false };
         const mockSubmitBtn = { click: jest.fn() };
@@ -234,6 +235,22 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         expect(document.querySelector).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.DRIVING_LICENCE_INPUT);
         expect(mockLicenceInput.value).toBe(DVSAAutomation.drivingLicenceNumber);
+    });
+
+    test('enterLicenceDetails aborts if licence is invalid', () => {
+        DVSAAutomation.drivingLicenceNumber = 'INVALID';
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const mockSubmitBtn = { click: jest.fn() };
+
+        document.querySelector.mockImplementation((selector) => {
+             if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+             return null;
+        });
+
+        DVSAAutomation.enterLicenceDetails();
+
+        expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid Driving Licence'));
+        expect(mockSubmitBtn.click).not.toHaveBeenCalled();
     });
 
     test('enterTestDate fills test date and submits', () => {
@@ -573,6 +590,23 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(GM_setValue).toHaveBeenCalledWith('maxDelay', 4000);
 
         expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Configuration saved'));
+    });
+
+    test('configure sanitizes licence and postcode to uppercase', () => {
+        GM_getValue.mockReturnValue('CURRENT_VAL');
+        prompt.mockReset();
+        prompt
+            .mockReturnValueOnce('abcde12345fghij6') // lowercase licence
+            .mockReturnValueOnce('15/08/2024')
+            .mockReturnValueOnce('sw1a 1aa')        // lowercase postcode
+            .mockReturnValueOnce('123456')
+            .mockReturnValueOnce('2000')
+            .mockReturnValueOnce('4000');
+
+        DVSAAutomation.configure();
+
+        expect(GM_setValue).toHaveBeenCalledWith('drivingLicenceNumber', 'ABCDE12345FGHIJ6');
+        expect(GM_setValue).toHaveBeenCalledWith('postcode', 'SW1A 1AA');
     });
 
     test('init calls handlePage on DOMContentLoaded when loading (optimization)', () => {
