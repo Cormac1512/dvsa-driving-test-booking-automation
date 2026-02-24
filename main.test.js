@@ -29,6 +29,7 @@ global.console = {
 };
 global.GM_setValue = jest.fn();
 global.GM_getValue = jest.fn();
+global.GM_registerMenuCommand = jest.fn();
 global.prompt = jest.fn();
 global.alert = jest.fn();
 global.requestAnimationFrame = (cb) => cb();
@@ -600,6 +601,40 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(global.document.addEventListener).not.toHaveBeenCalledWith('DOMContentLoaded', expect.any(Function));
     });
 
+    test('togglePause toggles paused state and shows toast', () => {
+        // Initial state: not paused (default)
+        GM_getValue.mockReturnValue(false);
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+
+        // Toggle to Pause
+        DVSAAutomation.togglePause();
+
+        expect(GM_getValue).toHaveBeenCalledWith('isPaused', false);
+        expect(GM_setValue).toHaveBeenCalledWith('isPaused', true);
+        expect(spyShowToast).toHaveBeenCalledWith('Automation Paused');
+
+        // Toggle to Resume
+        GM_getValue.mockReturnValue(true); // Now paused
+        const spyHandlePage = jest.spyOn(DVSAAutomation, 'handlePage');
+
+        DVSAAutomation.togglePause();
+
+        expect(GM_setValue).toHaveBeenCalledWith('isPaused', false);
+        expect(spyShowToast).toHaveBeenCalledWith('Automation Resumed');
+        expect(spyHandlePage).toHaveBeenCalled();
+    });
+
+    test('handlePage returns early if automation is paused', () => {
+        GM_getValue.mockReturnValue(true); // Paused
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const spyRandomDelay = jest.spyOn(DVSAAutomation, 'randomDelay');
+
+        DVSAAutomation.handlePage();
+
+        expect(spyShowToast).toHaveBeenCalledWith('Automation is paused');
+        expect(spyRandomDelay).not.toHaveBeenCalled();
+    });
+
     describe('Configuration Loading', () => {
         beforeEach(() => {
             jest.resetModules();
@@ -648,6 +683,12 @@ describe('DVSA Driving Test Booking Automation', () => {
             expect(DVSAAutomation.maxDelay).toBe(4000);
 
             expect(spyWarn).toHaveBeenCalledTimes(6); // One for each invalid field
+        });
+
+        test('registers menu commands', () => {
+            require('./main');
+            expect(global.GM_registerMenuCommand).toHaveBeenCalledWith("Configure Script", expect.any(Function));
+            expect(global.GM_registerMenuCommand).toHaveBeenCalledWith("Toggle Automation", expect.any(Function));
         });
     });
 });
