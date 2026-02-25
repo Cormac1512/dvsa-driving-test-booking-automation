@@ -25,7 +25,8 @@ global.window = {
 };
 global.console = {
     log: jest.fn(),
-    warn: jest.fn()
+    warn: jest.fn(),
+    error: jest.fn()
 };
 global.GM_setValue = jest.fn();
 global.GM_getValue = jest.fn();
@@ -667,6 +668,26 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         expect(spyShowToast).toHaveBeenCalledWith('Automation is paused');
         expect(spyRandomDelay).not.toHaveBeenCalled();
+    });
+
+    describe('Logger', () => {
+        test('formats info messages with timestamp and prefix', () => {
+            const spyLog = jest.spyOn(console, 'log');
+            DVSAAutomation.Logger.info('Test Info');
+            expect(spyLog).toHaveBeenCalledWith(expect.stringMatching(/\[.*\] \[DVSA Auto\] \[INFO\] Test Info/));
+        });
+
+        test('formats warn messages with timestamp and prefix', () => {
+            const spyWarn = jest.spyOn(console, 'warn');
+            DVSAAutomation.Logger.warn('Test Warn');
+            expect(spyWarn).toHaveBeenCalledWith(expect.stringMatching(/\[.*\] \[DVSA Auto\] \[WARN\] Test Warn/));
+        });
+
+        test('formats error messages with timestamp and prefix', () => {
+            const spyError = jest.spyOn(console, 'error');
+            DVSAAutomation.Logger.error('Test Error');
+            expect(spyError).toHaveBeenCalledWith(expect.stringMatching(/\[.*\] \[DVSA Auto\] \[ERROR\] Test Error/));
+        });
     });
 
     describe('Configuration Loading', () => {

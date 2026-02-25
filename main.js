@@ -26,6 +26,27 @@ const DVSAAutomation = (function () {
         }
     }
 
+    const Logger = {
+        log: function(message, level = 'INFO') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = `[${timestamp}] [DVSA Auto] [${level}]`;
+            console.log(`${prefix} ${message}`);
+        },
+        info: function(message) {
+            this.log(message, 'INFO');
+        },
+        warn: function(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = `[${timestamp}] [DVSA Auto] [WARN]`;
+            console.warn(`${prefix} ${message}`);
+        },
+        error: function(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = `[${timestamp}] [DVSA Auto] [ERROR]`;
+            console.error(`${prefix} ${message}`);
+        }
+    };
+
     // Validation functions
     function isValidLicence(licence) {
         return /^[a-zA-Z0-9]{16}$/.test(licence);
@@ -55,38 +76,38 @@ const DVSAAutomation = (function () {
     // Load and validate configuration
     let drivingLicenceNumber = getValue('drivingLicenceNumber', DEFAULT_LICENCE);
     if (!isValidLicence(drivingLicenceNumber)) {
-        console.warn('Invalid driving licence number in storage. Using default.');
+        Logger.warn('Invalid driving licence number in storage. Using default.');
         drivingLicenceNumber = DEFAULT_LICENCE;
     }
 
     let testDate = getValue('testDate', DEFAULT_DATE);
     if (!isValidDate(testDate)) {
-        console.warn('Invalid test date in storage. Using default.');
+        Logger.warn('Invalid test date in storage. Using default.');
         testDate = DEFAULT_DATE;
     }
 
     let postcode = getValue('postcode', DEFAULT_POSTCODE);
     if (!isValidPostcode(postcode)) {
-        console.warn('Invalid postcode in storage. Using default.');
+        Logger.warn('Invalid postcode in storage. Using default.');
         postcode = DEFAULT_POSTCODE;
     }
 
     let instructorReferenceNumber = getValue('instructorReferenceNumber', DEFAULT_INSTRUCTOR);
     if (instructorReferenceNumber !== '' && !isValidInstructor(instructorReferenceNumber)) {
-        console.warn('Invalid instructor reference number in storage. Using default.');
+        Logger.warn('Invalid instructor reference number in storage. Using default.');
         instructorReferenceNumber = DEFAULT_INSTRUCTOR;
     }
 
     const nearestNumOfCentres = 12; // Number of test centres to find
     let minDelay = parseInt(getValue('minDelay', 2000), 10);
     if (isNaN(minDelay)) {
-        console.warn('Invalid minDelay in storage. Using default.');
+        Logger.warn('Invalid minDelay in storage. Using default.');
         minDelay = 2000;
     }
 
     let maxDelay = parseInt(getValue('maxDelay', 4000), 10);
     if (isNaN(maxDelay)) {
-        console.warn('Invalid maxDelay in storage. Using default.');
+        Logger.warn('Invalid maxDelay in storage. Using default.');
         maxDelay = 4000;
     }
 
@@ -100,6 +121,8 @@ const DVSAAutomation = (function () {
         maxDelay,
         toastElement: null,
         toastTimeout: null,
+
+        Logger,
 
         SELECTORS: {
             TEST_TYPE_CAR: '#test-type-car',
@@ -278,7 +301,7 @@ const DVSAAutomation = (function () {
         },
 
         selectTestType(element) {
-            console.log('Running selectTestType...');
+            Logger.info('Running selectTestType...');
             app.showToast('Selecting test type...');
             const testTypeCarBtn = element || document.querySelector(app.SELECTORS.TEST_TYPE_CAR);
             if (testTypeCarBtn) {
@@ -287,7 +310,7 @@ const DVSAAutomation = (function () {
         },
 
         enterLicenceDetails(element) {
-            console.log('Running enterLicenceDetails...');
+            Logger.info('Running enterLicenceDetails...');
             if (!app.isValidLicence(app.drivingLicenceNumber)) {
                 app.showToast("Invalid Driving Licence configured. Stopping.");
                 return;
@@ -310,7 +333,7 @@ const DVSAAutomation = (function () {
         },
 
         enterTestDate(element) {
-            console.log('Running enterTestDate...');
+            Logger.info('Running enterTestDate...');
             app.showToast('Entering test date...');
             const testDateInput = element || document.querySelector(app.SELECTORS.TEST_DATE_INPUT);
             if (testDateInput) {
@@ -331,7 +354,7 @@ const DVSAAutomation = (function () {
         },
 
         enterPostcode(element) {
-            console.log('Running enterPostcode...');
+            Logger.info('Running enterPostcode...');
             app.showToast('Entering postcode...');
             const postcodeInput = element || document.querySelector(app.SELECTORS.POSTCODE_INPUT);
             if (postcodeInput) {
@@ -345,11 +368,11 @@ const DVSAAutomation = (function () {
         },
 
         checkResults(element) {
-            console.log('Running checkResults...');
+            Logger.info('Running checkResults...');
             const results = element || document.querySelector(app.SELECTORS.TEST_CENTRE_RESULTS);
 
             if (results) {
-                console.log('Checking number of test centers found...');
+                Logger.info('Checking number of test centers found...');
                 app.showToast('Checking results...');
                 if (results.children.length < app.nearestNumOfCentres) {
                     app.showToast('Fetching more centres...');
@@ -358,7 +381,7 @@ const DVSAAutomation = (function () {
 
                 // Sleep and search again
                 const interval = app.randomIntBetween(30000, 60000);
-                console.log('Sleeping for ' + interval / 1000 + 's');
+                Logger.info('Sleeping for ' + interval / 1000 + 's');
                 app.showToast(`Waiting ${Math.round(interval / 1000)}s before next check...`, 5000);
                 setTimeout(() => {
                     document.location.href = "https://driverpracticaltest.dvsa.gov.uk/application";
@@ -403,14 +426,14 @@ const DVSAAutomation = (function () {
             for (const route of routes) {
                 const element = document.querySelector(route.selector);
                 if (element) {
-                    console.log(`Matched route: ${route.name}`);
+                    Logger.info(`Matched route: ${route.name}`);
                     app.randomDelay(route.action, element);
                     return;
                 }
             }
 
-            console.log('No matching route found for current page.');
-            console.log('Page Title:', document.title);
+            Logger.info('No matching route found for current page.');
+            Logger.info('Page Title: ' + document.title);
         },
 
         init() {
