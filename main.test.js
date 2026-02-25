@@ -42,6 +42,7 @@ describe('DVSA Driving Test Booking Automation', () => {
         jest.useFakeTimers();
         jest.clearAllMocks();
         // Reset singleton state
+        DVSAAutomation.routes = null;
         DVSAAutomation.toastElement = null;
         if (DVSAAutomation.toastTimeout) {
             clearTimeout(DVSAAutomation.toastTimeout);
@@ -395,6 +396,17 @@ describe('DVSA Driving Test Booking Automation', () => {
         DVSAAutomation.handlePage();
 
         expect(spyRandomDelay).toHaveBeenCalledWith(DVSAAutomation.checkResults, mockResults);
+    });
+
+    test('handlePage caches routes array', () => {
+        DVSAAutomation.handlePage();
+        const routes1 = DVSAAutomation.routes;
+        expect(routes1).toBeDefined();
+        expect(Array.isArray(routes1)).toBe(true);
+
+        DVSAAutomation.handlePage();
+        const routes2 = DVSAAutomation.routes;
+        expect(routes2).toBe(routes1);
     });
 
 
