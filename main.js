@@ -100,14 +100,14 @@ const DVSAAutomation = (function () {
 
     const nearestNumOfCentres = 12; // Number of test centres to find
     let minDelay = parseInt(getValue('minDelay', 2000), 10);
-    if (isNaN(minDelay)) {
-        Logger.warn('Invalid minDelay in storage. Using default.');
+    if (isNaN(minDelay) || minDelay < 1000) {
+        Logger.warn('Invalid minDelay in storage (must be >= 1000). Using default.');
         minDelay = 2000;
     }
 
     let maxDelay = parseInt(getValue('maxDelay', 4000), 10);
-    if (isNaN(maxDelay)) {
-        Logger.warn('Invalid maxDelay in storage. Using default.');
+    if (isNaN(maxDelay) || maxDelay < 1000) {
+        Logger.warn('Invalid maxDelay in storage (must be >= 1000). Using default.');
         maxDelay = 4000;
     }
 
@@ -229,16 +229,16 @@ const DVSAAutomation = (function () {
             app.updateSetting(
                 'minDelay',
                 "Enter Minimum Delay (ms):",
-                (val) => !isNaN(val) && parseInt(val, 10) >= 0,
-                "Invalid Delay! It should be a positive number.",
+                (val) => !isNaN(val) && parseInt(val, 10) >= 1000,
+                "Invalid Delay! It should be at least 1000ms.",
                 (val) => parseInt(val, 10)
             );
 
             app.updateSetting(
                 'maxDelay',
                 "Enter Maximum Delay (ms):",
-                (val) => !isNaN(val) && parseInt(val, 10) >= 0,
-                "Invalid Delay! It should be a positive number.",
+                (val) => !isNaN(val) && parseInt(val, 10) >= 1000,
+                "Invalid Delay! It should be at least 1000ms.",
                 (val) => parseInt(val, 10)
             );
 
