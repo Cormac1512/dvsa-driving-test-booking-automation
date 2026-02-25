@@ -395,35 +395,37 @@ const DVSAAutomation = (function () {
                 return;
             }
 
-            const routes = [
-                {
-                    name: 'Step 1: Test Type',
-                    selector: app.SELECTORS.TEST_TYPE_CAR,
-                    action: app.selectTestType
-                },
-                {
-                    name: 'Step 2: Licence Details',
-                    selector: app.SELECTORS.DRIVING_LICENCE_INPUT,
-                    action: app.enterLicenceDetails
-                },
-                {
-                    name: 'Step 3: Test Date',
-                    selector: app.SELECTORS.TEST_DATE_INPUT,
-                    action: app.enterTestDate
-                },
-                {
-                    name: 'Step 5: Test Centre Results',
-                    selector: app.SELECTORS.TEST_CENTRE_RESULTS,
-                    action: app.checkResults
-                },
-                {
-                    name: 'Step 4: Postcode Search',
-                    selector: app.SELECTORS.POSTCODE_INPUT,
-                    action: app.enterPostcode
-                }
-            ];
+            if (!app.routes) {
+                app.routes = [
+                    {
+                        name: 'Step 1: Test Type',
+                        selector: app.SELECTORS.TEST_TYPE_CAR,
+                        action: app.selectTestType
+                    },
+                    {
+                        name: 'Step 2: Licence Details',
+                        selector: app.SELECTORS.DRIVING_LICENCE_INPUT,
+                        action: app.enterLicenceDetails
+                    },
+                    {
+                        name: 'Step 3: Test Date',
+                        selector: app.SELECTORS.TEST_DATE_INPUT,
+                        action: app.enterTestDate
+                    },
+                    {
+                        name: 'Step 5: Test Centre Results',
+                        selector: app.SELECTORS.TEST_CENTRE_RESULTS,
+                        action: app.checkResults
+                    },
+                    {
+                        name: 'Step 4: Postcode Search',
+                        selector: app.SELECTORS.POSTCODE_INPUT,
+                        action: app.enterPostcode
+                    }
+                ];
+            }
 
-            for (const route of routes) {
+            for (const route of app.routes) {
                 const element = document.querySelector(route.selector);
                 if (element) {
                     Logger.info(`Matched route: ${route.name}`);
