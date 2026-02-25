@@ -529,8 +529,8 @@ describe('DVSA Driving Test Booking Automation', () => {
              .mockReturnValueOnce('INVALID_DATE')    // Date
              .mockReturnValueOnce('INVALID_POSTCODE') // Postcode
              .mockReturnValueOnce('INVALID_INSTRUCTOR') // Instructor
-             .mockReturnValueOnce('INVALID_DELAY') // Min Delay
-             .mockReturnValueOnce('INVALID_DELAY'); // Max Delay
+             .mockReturnValueOnce('500') // Min Delay (Too small)
+             .mockReturnValueOnce('500'); // Max Delay (Too small)
 
         DVSAAutomation.configure();
 
@@ -547,10 +547,10 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Instructor Reference Number'));
 
         expect(GM_setValue).not.toHaveBeenCalledWith('minDelay', expect.anything());
-        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay'));
+        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay! It should be at least 1000ms.'));
 
         expect(GM_setValue).not.toHaveBeenCalledWith('maxDelay', expect.anything());
-        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay'));
+        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay! It should be at least 1000ms.'));
     });
 
     test('configure saves valid inputs with empty instructor', () => {
@@ -750,6 +750,28 @@ describe('DVSA Driving Test Booking Automation', () => {
             expect(DVSAAutomation.maxDelay).toBe(4000);
 
             expect(spyWarn).toHaveBeenCalledTimes(6); // One for each invalid field
+        });
+
+        test('falls back to defaults for unsafe delays', () => {
+            global.GM_getValue.mockImplementation((key) => {
+                if (key === 'minDelay') return 500;
+                if (key === 'maxDelay') return 500;
+                return null;
+            });
+
+            const spyWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+            const DVSAAutomation = require('./main');
+            expect(DVSAAutomation.minDelay).toBe(2000);
+            expect(DVSAAutomation.maxDelay).toBe(4000);
+
+            // Expect warns for minDelay and maxDelay, plus warns for other invalid fields because mock returns null
+            // For drivingLicenceNumber: null -> invalid -> warn
+            // For testDate: null -> invalid -> warn
+            // For postcode: null -> invalid -> warn
+            // For instructor: null -> invalid -> warn
+            // Total warns: 4 (others) + 2 (delays) = 6
+            expect(spyWarn).toHaveBeenCalledTimes(6);
         });
 
         test('registers menu commands', () => {
