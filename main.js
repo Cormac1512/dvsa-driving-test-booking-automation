@@ -177,7 +177,8 @@ const DVSAAutomation = (function () {
                 'drivingLicenceNumber',
                 "Enter Driving Licence Number:",
                 app.isValidLicence,
-                "Invalid Licence Number! It should be 16 alphanumeric characters."
+                "Invalid Licence Number! It should be 16 alphanumeric characters.",
+                (val) => val.toUpperCase()
             );
 
             app.updateSetting(
@@ -191,7 +192,8 @@ const DVSAAutomation = (function () {
                 'postcode',
                 "Enter Postcode:",
                 app.isValidPostcode,
-                "Invalid Postcode! Format should be valid UK Postcode."
+                "Invalid Postcode! Format should be valid UK Postcode.",
+                (val) => val.toUpperCase()
             );
 
             app.updateSetting(
@@ -286,6 +288,10 @@ const DVSAAutomation = (function () {
 
         enterLicenceDetails(element) {
             console.log('Running enterLicenceDetails...');
+            if (!app.isValidLicence(app.drivingLicenceNumber)) {
+                app.showToast("Invalid Driving Licence configured. Stopping.");
+                return;
+            }
             app.showToast('Entering licence details...');
             const drivingLicenceInput = element || document.querySelector(app.SELECTORS.DRIVING_LICENCE_INPUT);
             if (drivingLicenceInput) {
