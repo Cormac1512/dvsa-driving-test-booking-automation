@@ -183,6 +183,27 @@ const DVSAAutomation = (function () {
             setTimeout(callback, delay, ...args);
         },
 
+        /**
+         * Runs a countdown timer, calling onTick every second and onComplete when finished.
+         * @param {number} seconds - Total duration in seconds.
+         * @param {function(number): void} onTick - Callback for each tick, receives remaining seconds.
+         * @param {function(): void} onComplete - Callback when countdown finishes.
+         */
+        countdown(seconds, onTick, onComplete) {
+            let remaining = seconds;
+            onTick(remaining);
+            const intervalId = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(intervalId);
+                    if (onComplete) onComplete();
+                } else {
+                    onTick(remaining);
+                }
+            }, 1000);
+            return intervalId;
+        },
+
         togglePause() {
             const isPaused = getValue('isPaused', false);
             const newStatus = !isPaused;
@@ -381,11 +402,18 @@ const DVSAAutomation = (function () {
 
                 // Sleep and search again
                 const interval = app.randomIntBetween(30000, 60000);
-                Logger.info('Sleeping for ' + interval / 1000 + 's');
-                app.showToast(`Waiting ${Math.round(interval / 1000)}s before next check...`, 5000);
-                setTimeout(() => {
-                    document.location.href = "https://driverpracticaltest.dvsa.gov.uk/application";
-                }, interval);
+                const seconds = Math.round(interval / 1000);
+                Logger.info('Sleeping for ' + seconds + 's');
+
+                app.countdown(
+                    seconds,
+                    (remaining) => {
+                        app.showToast(`Next check in ${remaining}s...`, 2000);
+                    },
+                    () => {
+                        document.location.href = "https://driverpracticaltest.dvsa.gov.uk/application";
+                    }
+                );
             }
         },
 

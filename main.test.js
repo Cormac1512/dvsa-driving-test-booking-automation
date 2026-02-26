@@ -409,6 +409,60 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(routes2).toBe(routes1);
     });
 
+    describe('countdown', () => {
+        test('calls onTick immediately and then every second', () => {
+            const onTick = jest.fn();
+            const onComplete = jest.fn();
+            const seconds = 3;
+
+            DVSAAutomation.countdown(seconds, onTick, onComplete);
+
+            expect(onTick).toHaveBeenCalledWith(3);
+            expect(onTick).toHaveBeenCalledTimes(1);
+
+            jest.advanceTimersByTime(1000);
+            expect(onTick).toHaveBeenCalledWith(2);
+            expect(onTick).toHaveBeenCalledTimes(2);
+
+            jest.advanceTimersByTime(1000);
+            expect(onTick).toHaveBeenCalledWith(1);
+            expect(onTick).toHaveBeenCalledTimes(3);
+        });
+
+        test('calls onComplete when finished', () => {
+            const onTick = jest.fn();
+            const onComplete = jest.fn();
+            const seconds = 2;
+
+            DVSAAutomation.countdown(seconds, onTick, onComplete);
+
+            jest.advanceTimersByTime(1000); // 1s elapsed, rem: 1
+            jest.advanceTimersByTime(1000); // 2s elapsed, rem: 0 -> complete
+
+            expect(onComplete).toHaveBeenCalled();
+            expect(onTick).toHaveBeenCalledTimes(2); // 2 (initial), 1 (after 1s)
+        });
+
+        test('stops calling onTick after completion', () => {
+            const onTick = jest.fn();
+            const onComplete = jest.fn();
+            const seconds = 1;
+
+            DVSAAutomation.countdown(seconds, onTick, onComplete);
+
+            jest.advanceTimersByTime(1000); // Finished
+            expect(onComplete).toHaveBeenCalled();
+
+            jest.advanceTimersByTime(1000); // Extra time
+            expect(onTick).toHaveBeenCalledTimes(1); // Only initial call
+        });
+
+        test('returns interval ID', () => {
+            const id = DVSAAutomation.countdown(10, () => {}, () => {});
+            expect(id).toBeDefined();
+        });
+    });
+
 
     test('isValidLicence validates correct length and characters', () => {
         expect(DVSAAutomation.isValidLicence('ABCDE12345FGHIJ6')).toBe(true);
