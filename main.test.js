@@ -48,6 +48,8 @@ describe('DVSA Driving Test Booking Automation', () => {
             clearTimeout(DVSAAutomation.toastTimeout);
             DVSAAutomation.toastTimeout = null;
         }
+        DVSAAutomation.actionTimeout = null;
+        DVSAAutomation.countdownInterval = null;
         // Reset mock default behavior
         document.body.contains.mockReturnValue(true);
     });
@@ -723,6 +725,30 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(GM_setValue).toHaveBeenCalledWith('isPaused', false);
         expect(spyShowToast).toHaveBeenCalledWith('Automation Resumed');
         expect(spyHandlePage).toHaveBeenCalled();
+    });
+
+    test('togglePause clears actionTimeout when pausing', () => {
+        GM_getValue.mockReturnValue(false); // Currently running
+        const spyClearTimeout = jest.spyOn(global, 'clearTimeout');
+
+        // Simulate active action
+        DVSAAutomation.actionTimeout = 12345;
+
+        DVSAAutomation.togglePause(); // Pause
+
+        expect(spyClearTimeout).toHaveBeenCalledWith(12345);
+    });
+
+    test('togglePause clears countdownInterval when pausing', () => {
+        GM_getValue.mockReturnValue(false); // Currently running
+        const spyClearInterval = jest.spyOn(global, 'clearInterval');
+
+        // Simulate active countdown
+        DVSAAutomation.countdownInterval = 67890;
+
+        DVSAAutomation.togglePause(); // Pause
+
+        expect(spyClearInterval).toHaveBeenCalledWith(67890);
     });
 
     test('handlePage returns early if automation is paused', () => {

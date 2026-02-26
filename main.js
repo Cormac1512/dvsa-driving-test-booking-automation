@@ -121,6 +121,8 @@ const DVSAAutomation = (function () {
         maxDelay,
         toastElement: null,
         toastTimeout: null,
+        actionTimeout: null,
+        countdownInterval: null,
 
         Logger,
 
@@ -180,7 +182,7 @@ const DVSAAutomation = (function () {
 
         randomDelay(callback, ...args) {
             const delay = app.randomIntBetween(app.minDelay, app.maxDelay); // Random delay between minDelay and maxDelay
-            setTimeout(callback, delay, ...args);
+            app.actionTimeout = setTimeout(callback, delay, ...args);
         },
 
         /**
@@ -210,6 +212,8 @@ const DVSAAutomation = (function () {
             setValue('isPaused', newStatus);
             if (newStatus) {
                 app.showToast('Automation Paused');
+                if (app.actionTimeout) clearTimeout(app.actionTimeout);
+                if (app.countdownInterval) clearInterval(app.countdownInterval);
             } else {
                 app.showToast('Automation Resumed');
                 app.handlePage();
@@ -405,7 +409,7 @@ const DVSAAutomation = (function () {
                 const seconds = Math.round(interval / 1000);
                 Logger.info('Sleeping for ' + seconds + 's');
 
-                app.countdown(
+                app.countdownInterval = app.countdown(
                     seconds,
                     (remaining) => {
                         app.showToast(`Next check in ${remaining}s...`, 2000);
