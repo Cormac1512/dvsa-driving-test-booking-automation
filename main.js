@@ -305,9 +305,11 @@ const DVSAAutomation = (function () {
             }
 
             // Fade in
-            requestAnimationFrame(() => {
-                toast.style.opacity = '1';
-            });
+            if (toast.style.opacity !== '1') {
+                requestAnimationFrame(() => {
+                    toast.style.opacity = '1';
+                });
+            }
 
             // Schedule removal
             app.toastTimeout = setTimeout(() => {

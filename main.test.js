@@ -33,7 +33,7 @@ global.GM_getValue = jest.fn();
 global.GM_registerMenuCommand = jest.fn();
 global.prompt = jest.fn();
 global.alert = jest.fn();
-global.requestAnimationFrame = (cb) => cb();
+global.requestAnimationFrame = jest.fn((cb) => cb());
 
 const DVSAAutomation = require('./main');
 
@@ -184,6 +184,22 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         expect(spyClearTimeout).toHaveBeenCalledWith(timeout1);
         expect(DVSAAutomation.toastTimeout).not.toBe(timeout1);
+    });
+
+    test('showToast avoids redundant requestAnimationFrame calls when already visible', () => {
+        document.body.contains.mockReturnValue(true);
+
+        // First call: Should trigger animation
+        DVSAAutomation.showToast('Msg 1', 1000);
+        // Ensure it's fully visible
+        DVSAAutomation.toastElement.style.opacity = '1';
+
+        global.requestAnimationFrame.mockClear();
+
+        // Second call: Should NOT trigger animation if already visible
+        DVSAAutomation.showToast('Msg 2', 1000);
+
+        expect(global.requestAnimationFrame).not.toHaveBeenCalled();
     });
 
     test('selectTestType clicks car test button if it exists', () => {
