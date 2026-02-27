@@ -164,6 +164,8 @@ const DVSAAutomation = (function () {
         },
 
         randomIntBetween(min, max) {
+            if (min > max) [min, max] = [max, min]; // Swap if inverted
+
             if (randomBuffer && window.crypto && window.crypto.getRandomValues) {
                 const range = max - min + 1;
                 const max_range = 4294967296; // 2^32
@@ -182,6 +184,9 @@ const DVSAAutomation = (function () {
         },
 
         randomDelay(callback, ...args) {
+            if (app.actionTimeout) {
+                clearTimeout(app.actionTimeout);
+            }
             const delay = app.randomIntBetween(app.minDelay, app.maxDelay); // Random delay between minDelay and maxDelay
             app.actionTimeout = setTimeout(callback, delay, ...args);
         },
@@ -408,6 +413,10 @@ const DVSAAutomation = (function () {
                 }
 
                 // Sleep and search again
+                if (app.countdownInterval) {
+                    clearInterval(app.countdownInterval);
+                }
+
                 const interval = app.randomIntBetween(30000, 60000);
                 const seconds = Math.round(interval / 1000);
                 Logger.info('Sleeping for ' + seconds + 's');
