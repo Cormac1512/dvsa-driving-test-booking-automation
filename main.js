@@ -111,6 +111,8 @@ const DVSAAutomation = (function () {
         maxDelay = 4000;
     }
 
+    const randomBuffer = (typeof window !== 'undefined' && window.crypto) ? new Uint32Array(1) : null;
+
     const app = {
         drivingLicenceNumber,
         testDate,
@@ -160,20 +162,19 @@ const DVSAAutomation = (function () {
         },
 
         randomIntBetween(min, max) {
-            if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+            if (randomBuffer && window.crypto && window.crypto.getRandomValues) {
                 const range = max - min + 1;
                 const max_range = 4294967296; // 2^32
                 if (range >= max_range) {
                     return Math.floor(Math.random() * (max - min + 1)) + min;
                 }
                 const limit = Math.floor(max_range / range) * range;
-                const array = new Uint32Array(1);
 
                 do {
-                    window.crypto.getRandomValues(array);
-                } while (array[0] >= limit);
+                    window.crypto.getRandomValues(randomBuffer);
+                } while (randomBuffer[0] >= limit);
 
-                return min + (array[0] % range);
+                return min + (randomBuffer[0] % range);
             }
             return Math.floor(Math.random() * (max - min + 1)) + min;
         },
