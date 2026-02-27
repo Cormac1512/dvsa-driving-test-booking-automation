@@ -69,6 +69,14 @@ describe('DVSA Driving Test Booking Automation', () => {
         }
     });
 
+    test('randomIntBetween handles inverted min/max', () => {
+        const min = 5000;
+        const max = 2000;
+        const result = DVSAAutomation.randomIntBetween(min, max);
+        expect(result).toBeGreaterThanOrEqual(max);
+        expect(result).toBeLessThanOrEqual(min);
+    });
+
     test('randomIntBetween uses crypto when available', () => {
         const mockGetRandomValues = jest.fn((array) => {
             array[0] = 12345;
@@ -128,6 +136,20 @@ describe('DVSA Driving Test Booking Automation', () => {
         DVSAAutomation.randomDelay(callback, arg1, arg2);
         jest.runAllTimers();
         expect(callback).toHaveBeenCalledWith(arg1, arg2);
+    });
+
+    test('randomDelay clears previous timeout', () => {
+        const spyClearTimeout = jest.spyOn(global, 'clearTimeout');
+        const callback1 = jest.fn();
+        const callback2 = jest.fn();
+
+        DVSAAutomation.randomDelay(callback1);
+        const timeout1 = DVSAAutomation.actionTimeout;
+
+        DVSAAutomation.randomDelay(callback2);
+
+        expect(spyClearTimeout).toHaveBeenCalledWith(timeout1);
+        expect(DVSAAutomation.actionTimeout).not.toBe(timeout1);
     });
 
     test('showToast creates and removes toast element', () => {
@@ -375,6 +397,26 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         expect(document.querySelector).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS);
         expect(mockFetchBtn.click).toHaveBeenCalled();
+    });
+
+    test('checkResults clears previous countdown interval', () => {
+        const spyClearInterval = jest.spyOn(global, 'clearInterval');
+        const mockResults = { children: { length: 15 } }; // Enough centres so no fetch more
+
+        document.querySelector.mockImplementation((selector) => {
+            if (selector === DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS) return mockResults;
+            return null;
+        });
+
+        // First call sets interval
+        DVSAAutomation.checkResults();
+        const interval1 = DVSAAutomation.countdownInterval;
+
+        // Second call should clear previous
+        DVSAAutomation.checkResults();
+
+        expect(spyClearInterval).toHaveBeenCalledWith(interval1);
+        expect(DVSAAutomation.countdownInterval).not.toBe(interval1);
     });
 
     test('handlePage routes correctly based on existing elements', () => {
