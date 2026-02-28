@@ -13,6 +13,9 @@ global.document = {
         scrollIntoView: jest.fn()
     }),
     querySelector: jest.fn(),
+    getElementById: jest.fn(function(id) {
+        return this.querySelector('#' + id);
+    }),
     addEventListener: jest.fn(),
     title: '',
     location: { href: '' },

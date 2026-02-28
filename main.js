@@ -146,6 +146,10 @@ const DVSAAutomation = (function () {
         isValidInstructor,
         isValidDate,
 
+        getElement(selector) {
+            return selector[0] === '#' ? document.getElementById(selector.slice(1)) : document.querySelector(selector);
+        },
+
         updateSetting(key, promptMsg, validationFn, errorMessage, parser = (val) => val) {
             const currentValue = app[key];
             let newValue = prompt(promptMsg, currentValue);
@@ -336,7 +340,7 @@ const DVSAAutomation = (function () {
         selectTestType(element) {
             Logger.info('Running selectTestType...');
             app.showToast('Selecting test type...');
-            const testTypeCarBtn = element || document.querySelector(app.SELECTORS.TEST_TYPE_CAR);
+            const testTypeCarBtn = element || app.getElement(app.SELECTORS.TEST_TYPE_CAR);
             if (testTypeCarBtn) {
                 testTypeCarBtn.click();
             }
@@ -349,17 +353,17 @@ const DVSAAutomation = (function () {
                 return;
             }
             app.showToast('Entering licence details...');
-            const drivingLicenceInput = element || document.querySelector(app.SELECTORS.DRIVING_LICENCE_INPUT);
+            const drivingLicenceInput = element || app.getElement(app.SELECTORS.DRIVING_LICENCE_INPUT);
             if (drivingLicenceInput) {
                 drivingLicenceInput.value = app.drivingLicenceNumber;
             }
 
-            const specialNeedsNoneInput = document.querySelector(app.SELECTORS.SPECIAL_NEEDS_NONE);
+            const specialNeedsNoneInput = app.getElement(app.SELECTORS.SPECIAL_NEEDS_NONE);
             if (specialNeedsNoneInput) {
                 specialNeedsNoneInput.checked = true;
             }
 
-            const submitBtn = document.querySelector(app.SELECTORS.DRIVING_LICENCE_SUBMIT);
+            const submitBtn = app.getElement(app.SELECTORS.DRIVING_LICENCE_SUBMIT);
             if (submitBtn) {
                 submitBtn.click();
             }
@@ -368,19 +372,19 @@ const DVSAAutomation = (function () {
         enterTestDate(element) {
             Logger.info('Running enterTestDate...');
             app.showToast('Entering test date...');
-            const testDateInput = element || document.querySelector(app.SELECTORS.TEST_DATE_INPUT);
+            const testDateInput = element || app.getElement(app.SELECTORS.TEST_DATE_INPUT);
             if (testDateInput) {
                 testDateInput.value = app.testDate;
             }
 
             if (app.instructorReferenceNumber !== null && app.instructorReferenceNumber !== '') {
-                const instructorInput = document.querySelector(app.SELECTORS.INSTRUCTOR_INPUT);
+                const instructorInput = app.getElement(app.SELECTORS.INSTRUCTOR_INPUT);
                 if (instructorInput) {
                     instructorInput.value = app.instructorReferenceNumber;
                 }
             }
 
-            const submitBtn = document.querySelector(app.SELECTORS.DRIVING_LICENCE_SUBMIT);
+            const submitBtn = app.getElement(app.SELECTORS.DRIVING_LICENCE_SUBMIT);
             if (submitBtn) {
                 submitBtn.click();
             }
@@ -389,12 +393,12 @@ const DVSAAutomation = (function () {
         enterPostcode(element) {
             Logger.info('Running enterPostcode...');
             app.showToast('Entering postcode...');
-            const postcodeInput = element || document.querySelector(app.SELECTORS.POSTCODE_INPUT);
+            const postcodeInput = element || app.getElement(app.SELECTORS.POSTCODE_INPUT);
             if (postcodeInput) {
                 postcodeInput.value = app.postcode;
             }
 
-            const submitBtn = document.querySelector(app.SELECTORS.POSTCODE_SUBMIT);
+            const submitBtn = app.getElement(app.SELECTORS.POSTCODE_SUBMIT);
             if (submitBtn) {
                 submitBtn.click();
             }
@@ -402,14 +406,14 @@ const DVSAAutomation = (function () {
 
         checkResults(element) {
             Logger.info('Running checkResults...');
-            const results = element || document.querySelector(app.SELECTORS.TEST_CENTRE_RESULTS);
+            const results = element || app.getElement(app.SELECTORS.TEST_CENTRE_RESULTS);
 
             if (results) {
                 Logger.info('Checking number of test centers found...');
                 app.showToast('Checking results...');
                 if (results.children.length < app.nearestNumOfCentres) {
                     app.showToast('Fetching more centres...');
-                    document.querySelector(app.SELECTORS.FETCH_MORE_CENTRES).click();
+                    app.getElement(app.SELECTORS.FETCH_MORE_CENTRES).click();
                 }
 
                 // Sleep and search again
@@ -470,7 +474,7 @@ const DVSAAutomation = (function () {
             }
 
             for (const route of app.routes) {
-                const element = document.querySelector(route.selector);
+                const element = app.getElement(route.selector);
                 if (element) {
                     Logger.info(`Matched route: ${route.name}`);
                     app.randomDelay(route.action, element);
