@@ -291,11 +291,28 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         DVSAAutomation.enterLicenceDetails();
 
-        expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid Driving Licence'));
+        expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid or default Driving Licence'));
+        expect(mockSubmitBtn.click).not.toHaveBeenCalled();
+    });
+
+    test('enterLicenceDetails aborts if licence is default', () => {
+        DVSAAutomation.drivingLicenceNumber = 'Your_Driver_Licence_Here';
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const mockSubmitBtn = { click: jest.fn() };
+
+        document.querySelector.mockImplementation((selector) => {
+             if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+             return null;
+        });
+
+        DVSAAutomation.enterLicenceDetails();
+
+        expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid or default Driving Licence'));
         expect(mockSubmitBtn.click).not.toHaveBeenCalled();
     });
 
     test('enterTestDate fills test date and submits', () => {
+        DVSAAutomation.testDate = '01/01/2025'; // Ensure valid, non-default date
         const mockDateInput = { value: '' };
         const mockInstructorInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
@@ -317,6 +334,7 @@ describe('DVSA Driving Test Booking Automation', () => {
     });
 
     test('enterTestDate uses passed element without querySelector for input', () => {
+        DVSAAutomation.testDate = '01/01/2025'; // Ensure valid, non-default date
         const mockDateInput = { value: '' };
         const mockInstructorInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
@@ -334,7 +352,40 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(mockDateInput.value).toBe(DVSAAutomation.testDate);
     });
 
+    test('enterTestDate aborts if date is invalid', () => {
+        DVSAAutomation.testDate = 'INVALID';
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const mockSubmitBtn = { click: jest.fn() };
+
+        document.querySelector.mockImplementation((selector) => {
+             if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+             return null;
+        });
+
+        DVSAAutomation.enterTestDate();
+
+        expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid or default Test Date'));
+        expect(mockSubmitBtn.click).not.toHaveBeenCalled();
+    });
+
+    test('enterTestDate aborts if date is default', () => {
+        DVSAAutomation.testDate = '15/08/2024';
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const mockSubmitBtn = { click: jest.fn() };
+
+        document.querySelector.mockImplementation((selector) => {
+             if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+             return null;
+        });
+
+        DVSAAutomation.enterTestDate();
+
+        expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid or default Test Date'));
+        expect(mockSubmitBtn.click).not.toHaveBeenCalled();
+    });
+
     test('enterPostcode fills postcode and submits', () => {
+        DVSAAutomation.postcode = 'SW1A 1AA'; // Ensure valid, non-default postcode
         const mockPostcodeInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
 
@@ -351,6 +402,7 @@ describe('DVSA Driving Test Booking Automation', () => {
     });
 
     test('enterPostcode uses passed element without querySelector for input', () => {
+        DVSAAutomation.postcode = 'SW1A 1AA'; // Ensure valid, non-default postcode
         const mockPostcodeInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
 
@@ -364,6 +416,38 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         expect(document.querySelector).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.POSTCODE_INPUT);
         expect(mockPostcodeInput.value).toBe(DVSAAutomation.postcode);
+    });
+
+    test('enterPostcode aborts if postcode is invalid', () => {
+        DVSAAutomation.postcode = 'INVALID';
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const mockSubmitBtn = { click: jest.fn() };
+
+        document.querySelector.mockImplementation((selector) => {
+             if (selector === DVSAAutomation.SELECTORS.POSTCODE_SUBMIT) return mockSubmitBtn;
+             return null;
+        });
+
+        DVSAAutomation.enterPostcode();
+
+        expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid or default Postcode'));
+        expect(mockSubmitBtn.click).not.toHaveBeenCalled();
+    });
+
+    test('enterPostcode aborts if postcode is default', () => {
+        DVSAAutomation.postcode = 'PS2 4PZ';
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const mockSubmitBtn = { click: jest.fn() };
+
+        document.querySelector.mockImplementation((selector) => {
+             if (selector === DVSAAutomation.SELECTORS.POSTCODE_SUBMIT) return mockSubmitBtn;
+             return null;
+        });
+
+        DVSAAutomation.enterPostcode();
+
+        expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid or default Postcode'));
+        expect(mockSubmitBtn.click).not.toHaveBeenCalled();
     });
 
     test('checkResults handles results and clicks fetch more if needed', () => {
@@ -381,6 +465,20 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         jest.runAllTimers();
         expect(document.location.href).toBe("https://driverpracticaltest.dvsa.gov.uk/application");
+    });
+
+    test('checkResults does not error if fetch more button is not found', () => {
+        const mockResults = { children: { length: 5 } };
+        const spyWarn = jest.spyOn(DVSAAutomation.Logger, 'warn');
+
+        document.querySelector.mockImplementation((selector) => {
+            if (selector === DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS) return mockResults;
+            if (selector === DVSAAutomation.SELECTORS.FETCH_MORE_CENTRES) return null; // Button not found
+            return null;
+        });
+
+        expect(() => DVSAAutomation.checkResults()).not.toThrow();
+        expect(spyWarn).toHaveBeenCalledWith('Fetch more centres button not found.');
     });
 
     test('checkResults uses passed element without querySelector for results', () => {
