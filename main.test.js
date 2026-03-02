@@ -520,6 +520,19 @@ describe('DVSA Driving Test Booking Automation', () => {
             expect(onTick).toHaveBeenCalledTimes(1); // Only initial call
         });
 
+        test('clears existing actionTimeout on init', () => {
+            const mockClearTimeout = jest.spyOn(global, 'clearTimeout');
+            const timeoutId = setTimeout(jest.fn(), 1000);
+            DVSAAutomation.actionTimeout = timeoutId;
+
+            DVSAAutomation.countdown(5, jest.fn(), jest.fn());
+
+            expect(mockClearTimeout).toHaveBeenCalledWith(timeoutId);
+            expect(DVSAAutomation.actionTimeout).toBeNull();
+
+            mockClearTimeout.mockRestore();
+        });
+
         test('returns interval ID', () => {
             const id = DVSAAutomation.countdown(10, () => {}, () => {});
             expect(id).toBeDefined();

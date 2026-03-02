@@ -216,6 +216,11 @@ const DVSAAutomation = (function () {
          * @param {function(): void} onComplete - Callback when countdown finishes.
          */
         countdown(seconds, onTick, onComplete) {
+            if (app.actionTimeout) {
+                clearTimeout(app.actionTimeout);
+                app.actionTimeout = null;
+            }
+
             let remaining = seconds;
             onTick(remaining);
             const intervalId = setInterval(() => {
