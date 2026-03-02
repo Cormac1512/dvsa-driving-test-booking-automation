@@ -296,6 +296,7 @@ describe('DVSA Driving Test Booking Automation', () => {
     });
 
     test('enterTestDate fills test date and submits', () => {
+        DVSAAutomation.testDate = '15/08/2024'; // Ensure valid date
         const mockDateInput = { value: '' };
         const mockInstructorInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
@@ -317,6 +318,7 @@ describe('DVSA Driving Test Booking Automation', () => {
     });
 
     test('enterTestDate uses passed element without querySelector for input', () => {
+        DVSAAutomation.testDate = '15/08/2024'; // Ensure valid date
         const mockDateInput = { value: '' };
         const mockInstructorInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
@@ -334,7 +336,24 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(mockDateInput.value).toBe(DVSAAutomation.testDate);
     });
 
+    test('enterTestDate aborts if date is invalid', () => {
+        DVSAAutomation.testDate = 'INVALID';
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const mockSubmitBtn = { click: jest.fn() };
+
+        document.querySelector.mockImplementation((selector) => {
+             if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+             return null;
+        });
+
+        DVSAAutomation.enterTestDate();
+
+        expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid Test Date'));
+        expect(mockSubmitBtn.click).not.toHaveBeenCalled();
+    });
+
     test('enterPostcode fills postcode and submits', () => {
+        DVSAAutomation.postcode = 'PS2 4PZ'; // Ensure valid postcode
         const mockPostcodeInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
 
@@ -351,6 +370,7 @@ describe('DVSA Driving Test Booking Automation', () => {
     });
 
     test('enterPostcode uses passed element without querySelector for input', () => {
+        DVSAAutomation.postcode = 'PS2 4PZ'; // Ensure valid postcode
         const mockPostcodeInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
 
@@ -364,6 +384,22 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         expect(document.querySelector).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.POSTCODE_INPUT);
         expect(mockPostcodeInput.value).toBe(DVSAAutomation.postcode);
+    });
+
+    test('enterPostcode aborts if postcode is invalid', () => {
+        DVSAAutomation.postcode = 'INVALID';
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const mockSubmitBtn = { click: jest.fn() };
+
+        document.querySelector.mockImplementation((selector) => {
+             if (selector === DVSAAutomation.SELECTORS.POSTCODE_SUBMIT) return mockSubmitBtn;
+             return null;
+        });
+
+        DVSAAutomation.enterPostcode();
+
+        expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid Postcode'));
+        expect(mockSubmitBtn.click).not.toHaveBeenCalled();
     });
 
     test('checkResults handles results and clicks fetch more if needed', () => {

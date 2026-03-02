@@ -367,6 +367,10 @@ const DVSAAutomation = (function () {
 
         enterTestDate(element) {
             Logger.info('Running enterTestDate...');
+            if (!app.isValidDate(app.testDate)) {
+                app.showToast("Invalid Test Date configured. Stopping.");
+                return;
+            }
             app.showToast('Entering test date...');
             const testDateInput = element || document.querySelector(app.SELECTORS.TEST_DATE_INPUT);
             if (testDateInput) {
@@ -388,6 +392,10 @@ const DVSAAutomation = (function () {
 
         enterPostcode(element) {
             Logger.info('Running enterPostcode...');
+            if (!app.isValidPostcode(app.postcode)) {
+                app.showToast("Invalid Postcode configured. Stopping.");
+                return;
+            }
             app.showToast('Entering postcode...');
             const postcodeInput = element || document.querySelector(app.SELECTORS.POSTCODE_INPUT);
             if (postcodeInput) {
