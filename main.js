@@ -154,6 +154,11 @@ const DVSAAutomation = (function () {
         actionTimeout: null,
         countdownInterval: null,
 
+        DEFAULT_LICENCE,
+        DEFAULT_DATE,
+        DEFAULT_POSTCODE,
+        DEFAULT_INSTRUCTOR,
+
         Logger,
 
         SELECTORS: {
@@ -397,8 +402,8 @@ const DVSAAutomation = (function () {
 
         enterLicenceDetails(element) {
             Logger.info('Running enterLicenceDetails...');
-            if (!app.isValidLicence(app.drivingLicenceNumber)) {
-                app.showToast("Invalid Driving Licence configured. Stopping.");
+            if (!app.isValidLicence(app.drivingLicenceNumber) || app.drivingLicenceNumber === app.DEFAULT_LICENCE) {
+                app.showToast("Invalid or default Driving Licence configured. Stopping.");
                 return;
             }
             app.showToast('Entering licence details...');
@@ -420,6 +425,10 @@ const DVSAAutomation = (function () {
 
         enterTestDate(element) {
             Logger.info('Running enterTestDate...');
+            if (!app.isValidDate(app.testDate) || app.testDate === app.DEFAULT_DATE) {
+                app.showToast("Invalid or default Test Date configured. Stopping.");
+                return;
+            }
             app.showToast('Entering test date...');
             const testDateInput = element || app.getElement(app.SELECTORS.TEST_DATE_INPUT);
             if (testDateInput) {
@@ -441,6 +450,10 @@ const DVSAAutomation = (function () {
 
         enterPostcode(element) {
             Logger.info('Running enterPostcode...');
+            if (!app.isValidPostcode(app.postcode) || app.postcode === app.DEFAULT_POSTCODE) {
+                app.showToast("Invalid or default Postcode configured. Stopping.");
+                return;
+            }
             app.showToast('Entering postcode...');
             const postcodeInput = element || app.getElement(app.SELECTORS.POSTCODE_INPUT);
             if (postcodeInput) {
