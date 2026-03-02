@@ -111,6 +111,18 @@ const DVSAAutomation = (function () {
         maxDelay = 4000;
     }
 
+    let checkResultsMinDelay = parseInt(getValue('checkResultsMinDelay', 30000), 10);
+    if (isNaN(checkResultsMinDelay) || checkResultsMinDelay < 1000) {
+        Logger.warn('Invalid checkResultsMinDelay in storage (must be >= 1000). Using default.');
+        checkResultsMinDelay = 30000;
+    }
+
+    let checkResultsMaxDelay = parseInt(getValue('checkResultsMaxDelay', 60000), 10);
+    if (isNaN(checkResultsMaxDelay) || checkResultsMaxDelay < 1000) {
+        Logger.warn('Invalid checkResultsMaxDelay in storage (must be >= 1000). Using default.');
+        checkResultsMaxDelay = 60000;
+    }
+
     const randomBuffer = (typeof window !== 'undefined' && window.crypto) ? new Uint32Array(1) : null;
 
     const app = {
@@ -121,6 +133,8 @@ const DVSAAutomation = (function () {
         nearestNumOfCentres,
         minDelay,
         maxDelay,
+        checkResultsMinDelay,
+        checkResultsMaxDelay,
         toastElement: null,
         toastTimeout: null,
         actionTimeout: null,
@@ -273,6 +287,22 @@ const DVSAAutomation = (function () {
                 (val) => parseInt(val, 10)
             );
 
+            app.updateSetting(
+                'checkResultsMinDelay',
+                "Enter Minimum Check Results Delay (ms):",
+                (val) => !isNaN(val) && parseInt(val, 10) >= 1000,
+                "Invalid Delay! It should be at least 1000ms.",
+                (val) => parseInt(val, 10)
+            );
+
+            app.updateSetting(
+                'checkResultsMaxDelay',
+                "Enter Maximum Check Results Delay (ms):",
+                (val) => !isNaN(val) && parseInt(val, 10) >= 1000,
+                "Invalid Delay! It should be at least 1000ms.",
+                (val) => parseInt(val, 10)
+            );
+
             app.showToast("Configuration saved. Please reload the page.");
         },
 
@@ -417,7 +447,7 @@ const DVSAAutomation = (function () {
                     clearInterval(app.countdownInterval);
                 }
 
-                const interval = app.randomIntBetween(30000, 60000);
+                const interval = app.randomIntBetween(app.checkResultsMinDelay, app.checkResultsMaxDelay);
                 const seconds = Math.round(interval / 1000);
                 Logger.info('Sleeping for ' + seconds + 's');
 
