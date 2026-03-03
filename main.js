@@ -475,7 +475,10 @@ const DVSAAutomation = (function () {
                 app.showToast('Checking results...');
                 if (results.children.length < app.nearestNumOfCentres) {
                     app.showToast('Fetching more centres...');
-                    app.getElement(app.SELECTORS.FETCH_MORE_CENTRES).click();
+                    const fetchMoreBtn = app.getElement(app.SELECTORS.FETCH_MORE_CENTRES);
+                    if (fetchMoreBtn) {
+                        fetchMoreBtn.click();
+                    }
                 }
 
                 // Sleep and search again
