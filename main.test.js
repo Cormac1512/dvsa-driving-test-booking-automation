@@ -487,6 +487,21 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(mockFetchBtn.click).toHaveBeenCalled();
     });
 
+    test('checkResults handles missing fetch more centres button gracefully', () => {
+        const mockResults = { children: { length: 5 } };
+
+        document.querySelector.mockImplementation((selector) => {
+             // Mock FETCH_MORE_CENTRES to return null
+            if (selector === DVSAAutomation.SELECTORS.FETCH_MORE_CENTRES) return null;
+            return null;
+        });
+
+        // This should not throw an error
+        expect(() => {
+            DVSAAutomation.checkResults(mockResults);
+        }).not.toThrow();
+    });
+
     test('checkResults clears previous countdown interval', () => {
         const spyClearInterval = jest.spyOn(global, 'clearInterval');
         const mockResults = { children: { length: 15 } }; // Enough centres so no fetch more
