@@ -348,7 +348,12 @@ const DVSAAutomation = (function () {
             }
 
             const toast = app.toastElement;
-            toast.textContent = message;
+
+            // ⚡ Bolt Optimization: Only update textContent if it has changed to prevent unnecessary
+            // DOM reflows and repaints, especially critical since showToast is called every second during countdowns.
+            if (toast.textContent !== message) {
+                toast.textContent = message;
+            }
 
             if (!document.body.contains(toast)) {
                 document.body.appendChild(toast);

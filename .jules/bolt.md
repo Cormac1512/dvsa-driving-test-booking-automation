@@ -9,3 +9,7 @@
 ## 2025-02-12 - Reusing DOM Elements for Frequent Updates
 **Learning:** The `showToast` function was creating a new DOM element for every message, leading to overlapping text and unnecessary DOM churn when messages were triggered in quick succession (e.g., inside a loop or rapid state changes).
 **Action:** Implemented a singleton pattern for the toast element (`app.toastElement`). Always check if an element exists and reuse it before creating a new one. This also required managing timeouts (`app.toastTimeout`) to prevent premature removal of the reused element.
+
+## 2025-02-13 - Avoid Redundant textContent Updates
+**Learning:** Frequent redundant updates to `element.textContent` trigger unnecessary layout recalculations and DOM reflows. In a script that heavily uses toast notifications for countdowns (updating text every second), this churn can cause significant performance overhead and lag in the UI.
+**Action:** Implemented a simple check (`if (element.textContent !== newText)`) before assigning to `textContent`. Always apply this pattern when updating text or styles in frequent intervals like `requestAnimationFrame` or `setInterval`.
