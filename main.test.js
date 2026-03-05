@@ -978,6 +978,55 @@ describe('DVSA Driving Test Booking Automation', () => {
         });
     });
 
+    describe('Configuration Utilities', () => {
+        test('isValidInstructorOptional validates empty string or numeric input', () => {
+            expect(DVSAAutomation.isValidInstructorOptional('')).toBe(true);
+            expect(DVSAAutomation.isValidInstructorOptional('123456')).toBe(true);
+            expect(DVSAAutomation.isValidInstructorOptional('ABC')).toBe(false);
+        });
+
+        test('isValidDelay validates numeric strings >= 1000', () => {
+            expect(DVSAAutomation.isValidDelay('1000')).toBe(true);
+            expect(DVSAAutomation.isValidDelay('2500')).toBe(true);
+            expect(DVSAAutomation.isValidDelay(3000)).toBe(true);
+            expect(DVSAAutomation.isValidDelay('999')).toBe(false);
+            expect(DVSAAutomation.isValidDelay(500)).toBe(false);
+            expect(DVSAAutomation.isValidDelay('invalid')).toBe(false);
+        });
+
+        test('parseDelay parses string to integer base 10', () => {
+            expect(DVSAAutomation.parseDelay('1234')).toBe(1234);
+            expect(DVSAAutomation.parseDelay('2000')).toBe(2000);
+            expect(DVSAAutomation.parseDelay('0500')).toBe(500);
+        });
+
+        test('loadSetting returns parsed valid value', () => {
+            global.GM_getValue.mockReturnValueOnce('2000');
+            const result = DVSAAutomation.loadSetting('testKey', 1000, DVSAAutomation.isValidDelay, 'Error Msg', DVSAAutomation.parseDelay);
+            expect(result).toBe(2000);
+            expect(global.GM_getValue).toHaveBeenCalledWith('testKey', 1000);
+        });
+
+        test('loadSetting returns default value on invalid input and logs warning', () => {
+            global.GM_getValue.mockReturnValueOnce('500'); // Invalid, < 1000
+            const spyWarn = jest.spyOn(console, 'warn').mockImplementation();
+
+            const result = DVSAAutomation.loadSetting('testKey', 1000, DVSAAutomation.isValidDelay, 'Invalid Delay Warning', DVSAAutomation.parseDelay);
+
+            expect(result).toBe(1000); // Falls back to default
+            expect(spyWarn).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay Warning'));
+
+            spyWarn.mockRestore();
+        });
+
+        test('loadSetting returns value as is if no parser is provided', () => {
+            global.GM_getValue.mockReturnValueOnce('ABCDE12345FGHIJ6'); // Valid Licence
+            const result = DVSAAutomation.loadSetting('licenceKey', 'DEFAULT', DVSAAutomation.isValidLicence, 'Error Msg');
+
+            expect(result).toBe('ABCDE12345FGHIJ6');
+        });
+    });
+
     describe('Configuration Loading', () => {
         beforeEach(() => {
             jest.resetModules();

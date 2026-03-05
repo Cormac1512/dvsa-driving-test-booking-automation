@@ -82,60 +82,103 @@ const DVSAAutomation = (function () {
         return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
     }
 
+    function isValidInstructorOptional(instructor) {
+        return instructor === '' || isValidInstructor(instructor);
+    }
+
+    function isValidDelay(delay) {
+        return !isNaN(delay) && parseInt(delay, 10) >= 1000;
+    }
+
+    function parseDelay(delay) {
+        return parseInt(delay, 10);
+    }
+
+    /**
+     * Loads a setting from storage, validates it, and falls back to a default if invalid.
+     * @param {string} key - The setting key in storage.
+     * @param {*} defaultValue - The default value to fall back to.
+     * @param {function} validateFn - The function to validate the retrieved value.
+     * @param {string} errorMsg - The warning message to log if the value is invalid.
+     * @param {function} [parserFn] - Optional function to parse the value before returning.
+     * @returns {*} The validated or default value.
+     */
+    function loadSetting(key, defaultValue, validateFn, errorMsg, parserFn = (val) => val) {
+        const value = getValue(key, defaultValue);
+        if (!validateFn(value)) {
+            Logger.warn(errorMsg);
+            return defaultValue;
+        }
+        return parserFn(value);
+    }
+
     const DEFAULT_LICENCE = 'Your_Driver_Licence_Here';
     const DEFAULT_DATE = '15/08/2024';
     const DEFAULT_POSTCODE = 'PS2 4PZ';
     const DEFAULT_INSTRUCTOR = '';
 
     // Load and validate configuration
-    let drivingLicenceNumber = getValue('drivingLicenceNumber', DEFAULT_LICENCE);
-    if (!isValidLicence(drivingLicenceNumber)) {
-        Logger.warn('Invalid driving licence number in storage. Using default.');
-        drivingLicenceNumber = DEFAULT_LICENCE;
-    }
+    let drivingLicenceNumber = loadSetting(
+        'drivingLicenceNumber',
+        DEFAULT_LICENCE,
+        isValidLicence,
+        'Invalid driving licence number in storage. Using default.'
+    );
 
-    let testDate = getValue('testDate', DEFAULT_DATE);
-    if (!isValidDate(testDate)) {
-        Logger.warn('Invalid test date in storage. Using default.');
-        testDate = DEFAULT_DATE;
-    }
+    let testDate = loadSetting(
+        'testDate',
+        DEFAULT_DATE,
+        isValidDate,
+        'Invalid test date in storage. Using default.'
+    );
 
-    let postcode = getValue('postcode', DEFAULT_POSTCODE);
-    if (!isValidPostcode(postcode)) {
-        Logger.warn('Invalid postcode in storage. Using default.');
-        postcode = DEFAULT_POSTCODE;
-    }
+    let postcode = loadSetting(
+        'postcode',
+        DEFAULT_POSTCODE,
+        isValidPostcode,
+        'Invalid postcode in storage. Using default.'
+    );
 
-    let instructorReferenceNumber = getValue('instructorReferenceNumber', DEFAULT_INSTRUCTOR);
-    if (instructorReferenceNumber !== '' && !isValidInstructor(instructorReferenceNumber)) {
-        Logger.warn('Invalid instructor reference number in storage. Using default.');
-        instructorReferenceNumber = DEFAULT_INSTRUCTOR;
-    }
+    let instructorReferenceNumber = loadSetting(
+        'instructorReferenceNumber',
+        DEFAULT_INSTRUCTOR,
+        isValidInstructorOptional,
+        'Invalid instructor reference number in storage. Using default.'
+    );
 
     const nearestNumOfCentres = 12; // Number of test centres to find
-    let minDelay = parseInt(getValue('minDelay', 2000), 10);
-    if (isNaN(minDelay) || minDelay < 1000) {
-        Logger.warn('Invalid minDelay in storage (must be >= 1000). Using default.');
-        minDelay = 2000;
-    }
 
-    let maxDelay = parseInt(getValue('maxDelay', 4000), 10);
-    if (isNaN(maxDelay) || maxDelay < 1000) {
-        Logger.warn('Invalid maxDelay in storage (must be >= 1000). Using default.');
-        maxDelay = 4000;
-    }
+    let minDelay = loadSetting(
+        'minDelay',
+        2000,
+        isValidDelay,
+        'Invalid minDelay in storage (must be >= 1000). Using default.',
+        parseDelay
+    );
 
-    let checkResultsMinDelay = parseInt(getValue('checkResultsMinDelay', 30000), 10);
-    if (isNaN(checkResultsMinDelay) || checkResultsMinDelay < 1000) {
-        Logger.warn('Invalid checkResultsMinDelay in storage (must be >= 1000). Using default.');
-        checkResultsMinDelay = 30000;
-    }
+    let maxDelay = loadSetting(
+        'maxDelay',
+        4000,
+        isValidDelay,
+        'Invalid maxDelay in storage (must be >= 1000). Using default.',
+        parseDelay
+    );
 
-    let checkResultsMaxDelay = parseInt(getValue('checkResultsMaxDelay', 60000), 10);
-    if (isNaN(checkResultsMaxDelay) || checkResultsMaxDelay < 1000) {
-        Logger.warn('Invalid checkResultsMaxDelay in storage (must be >= 1000). Using default.');
-        checkResultsMaxDelay = 60000;
-    }
+    let checkResultsMinDelay = loadSetting(
+        'checkResultsMinDelay',
+        30000,
+        isValidDelay,
+        'Invalid checkResultsMinDelay in storage (must be >= 1000). Using default.',
+        parseDelay
+    );
+
+    let checkResultsMaxDelay = loadSetting(
+        'checkResultsMaxDelay',
+        60000,
+        isValidDelay,
+        'Invalid checkResultsMaxDelay in storage (must be >= 1000). Using default.',
+        parseDelay
+    );
 
     const randomBuffer = (typeof window !== 'undefined' && window.crypto) ? new Uint32Array(1) : null;
 
@@ -178,6 +221,10 @@ const DVSAAutomation = (function () {
         isValidPostcode,
         isValidInstructor,
         isValidDate,
+        isValidInstructorOptional,
+        isValidDelay,
+        parseDelay,
+        loadSetting,
 
         getElement(selector) {
             return selector[0] === '#' ? document.getElementById(selector.slice(1)) : document.querySelector(selector);
@@ -295,40 +342,40 @@ const DVSAAutomation = (function () {
             app.updateSetting(
                 'instructorReferenceNumber',
                 "Enter Instructor Reference Number (Optional):",
-                (val) => val === '' || app.isValidInstructor(val),
+                app.isValidInstructorOptional,
                 "Invalid Instructor Reference Number! It should be a numeric value."
             );
 
             app.updateSetting(
                 'minDelay',
                 "Enter Minimum Delay (ms):",
-                (val) => !isNaN(val) && parseInt(val, 10) >= 1000,
+                app.isValidDelay,
                 "Invalid Delay! It should be at least 1000ms.",
-                (val) => parseInt(val, 10)
+                app.parseDelay
             );
 
             app.updateSetting(
                 'maxDelay',
                 "Enter Maximum Delay (ms):",
-                (val) => !isNaN(val) && parseInt(val, 10) >= 1000,
+                app.isValidDelay,
                 "Invalid Delay! It should be at least 1000ms.",
-                (val) => parseInt(val, 10)
+                app.parseDelay
             );
 
             app.updateSetting(
                 'checkResultsMinDelay',
                 "Enter Minimum Check Results Delay (ms):",
-                (val) => !isNaN(val) && parseInt(val, 10) >= 1000,
+                app.isValidDelay,
                 "Invalid Delay! It should be at least 1000ms.",
-                (val) => parseInt(val, 10)
+                app.parseDelay
             );
 
             app.updateSetting(
                 'checkResultsMaxDelay',
                 "Enter Maximum Check Results Delay (ms):",
-                (val) => !isNaN(val) && parseInt(val, 10) >= 1000,
+                app.isValidDelay,
                 "Invalid Delay! It should be at least 1000ms.",
-                (val) => parseInt(val, 10)
+                app.parseDelay
             );
 
             app.showToast("Configuration saved. Please reload the page.");
