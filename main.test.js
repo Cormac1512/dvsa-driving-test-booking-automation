@@ -141,6 +141,18 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(callback).toHaveBeenCalledWith(arg1, arg2);
     });
 
+    test('randomDelay safely catches and logs callback errors', () => {
+        const spyError = jest.spyOn(DVSAAutomation.Logger, 'error');
+        const callback = jest.fn().mockImplementation(() => {
+            throw new Error('Test Error');
+        });
+
+        DVSAAutomation.randomDelay(callback);
+        jest.runAllTimers();
+
+        expect(spyError).toHaveBeenCalledWith('Action execution failed securely. Stack trace suppressed to prevent leakage.');
+    });
+
     test('randomDelay clears previous timeout', () => {
         const spyClearTimeout = jest.spyOn(global, 'clearTimeout');
         const callback1 = jest.fn();

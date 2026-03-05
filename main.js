@@ -239,7 +239,13 @@ const DVSAAutomation = (function () {
                 clearTimeout(app.actionTimeout);
             }
             const delay = app.randomIntBetween(app.minDelay, app.maxDelay); // Random delay between minDelay and maxDelay
-            app.actionTimeout = setTimeout(callback, delay, ...args);
+            app.actionTimeout = setTimeout(() => {
+                try {
+                    callback(...args);
+                } catch (error) {
+                    app.Logger.error('Action execution failed securely. Stack trace suppressed to prevent leakage.');
+                }
+            }, delay);
         },
 
         /**
