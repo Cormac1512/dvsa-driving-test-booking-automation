@@ -225,7 +225,13 @@ const DVSAAutomation = (function () {
                 clearTimeout(app.actionTimeout);
             }
             const delay = app.randomIntBetween(app.minDelay, app.maxDelay); // Random delay between minDelay and maxDelay
-            app.actionTimeout = setTimeout(callback, delay, ...args);
+            app.actionTimeout = setTimeout(() => {
+                try {
+                    callback(...args);
+                } catch (error) {
+                    Logger.error('Error in randomDelay callback');
+                }
+            }, delay);
         },
 
         /**
@@ -241,14 +247,24 @@ const DVSAAutomation = (function () {
             }
 
             let remaining = seconds;
-            onTick(remaining);
+            try {
+                onTick(remaining);
+            } catch (error) {
+                Logger.error('Error in countdown onTick');
+            }
+
             const intervalId = setInterval(() => {
-                remaining--;
-                if (remaining <= 0) {
+                try {
+                    remaining--;
+                    if (remaining <= 0) {
+                        clearInterval(intervalId);
+                        if (onComplete) onComplete();
+                    } else {
+                        onTick(remaining);
+                    }
+                } catch (error) {
+                    Logger.error('Error in countdown interval');
                     clearInterval(intervalId);
-                    if (onComplete) onComplete();
-                } else {
-                    onTick(remaining);
                 }
             }, 1000);
             return intervalId;
