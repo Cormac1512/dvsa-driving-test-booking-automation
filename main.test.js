@@ -680,6 +680,26 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(DVSAAutomation.isValidDate('invalid')).toBe(false);
     });
 
+    test('isValidDelay validates delay format and length', () => {
+        expect(DVSAAutomation.isValidDelay(2000)).toBe(true);
+        expect(DVSAAutomation.isValidDelay('2000')).toBe(true);
+        expect(DVSAAutomation.isValidDelay(1000)).toBe(true);
+        expect(DVSAAutomation.isValidDelay(999)).toBe(false);
+        expect(DVSAAutomation.isValidDelay('abc')).toBe(false);
+    });
+
+    test('parseDelay parses delay format correctly', () => {
+        expect(DVSAAutomation.parseDelay('2000')).toBe(2000);
+        expect(DVSAAutomation.parseDelay(2000)).toBe(2000);
+    });
+
+    test('isValidInstructorOptional validates empty string or valid instructor format', () => {
+        expect(DVSAAutomation.isValidInstructorOptional('')).toBe(true);
+        expect(DVSAAutomation.isValidInstructorOptional('123456')).toBe(true);
+        expect(DVSAAutomation.isValidInstructorOptional('abc')).toBe(false);
+        expect(DVSAAutomation.isValidInstructorOptional('123a')).toBe(false);
+    });
+
     test('updateSetting prompts, validates, and saves', () => {
         const key = 'testKey';
         const promptMsg = 'Enter Value:';
@@ -988,6 +1008,36 @@ describe('DVSA Driving Test Booking Automation', () => {
         beforeEach(() => {
             jest.resetModules();
             jest.clearAllMocks();
+        });
+
+        test('loadSetting loads value, validates, logs warning and falls back to default if invalid', () => {
+            const spyWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+            global.GM_getValue.mockImplementation((key) => {
+                if (key === 'validKey') return 'validValue';
+                if (key === 'invalidKey') return 'invalidValue';
+                return null;
+            });
+
+            const validateTrue = jest.fn(() => true);
+            const validateFalse = jest.fn(() => false);
+            const parseFn = jest.fn((val) => val.toUpperCase());
+
+            const DVSAAutomation = require('./main');
+            spyWarn.mockClear();
+
+            const validResult = DVSAAutomation.loadSetting('validKey', 'defaultVal', validateTrue, 'Warning message', parseFn);
+            expect(validResult).toBe('VALIDVALUE');
+            expect(validateTrue).toHaveBeenCalledWith('validValue');
+            expect(parseFn).toHaveBeenCalledWith('validValue');
+            expect(spyWarn).not.toHaveBeenCalled();
+
+            const invalidResult = DVSAAutomation.loadSetting('invalidKey', 'defaultVal', validateFalse, 'Warning message');
+            expect(invalidResult).toBe('defaultVal');
+            expect(validateFalse).toHaveBeenCalledWith('invalidValue');
+            expect(spyWarn).toHaveBeenCalledWith(expect.stringMatching(/\[.*\] \[DVSA Auto\] \[WARN\] Warning message/));
+
+            spyWarn.mockRestore();
         });
 
         test('loads valid configuration from storage', () => {
