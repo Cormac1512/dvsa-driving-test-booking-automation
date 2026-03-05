@@ -229,11 +229,11 @@ describe('DVSA Driving Test Booking Automation', () => {
 
     test('selectTestType clicks car test button if it exists', () => {
         const mockBtn = { click: jest.fn() };
-        document.querySelector.mockReturnValueOnce(mockBtn);
+        document.getElementById.mockReturnValueOnce(mockBtn);
 
         DVSAAutomation.selectTestType();
 
-        expect(document.querySelector).toHaveBeenCalledWith(DVSAAutomation.SELECTORS.TEST_TYPE_CAR);
+        expect(document.getElementById).toHaveBeenCalledWith(DVSAAutomation.SELECTORS.TEST_TYPE_CAR.id);
         expect(mockBtn.click).toHaveBeenCalled();
     });
 
@@ -250,10 +250,10 @@ describe('DVSA Driving Test Booking Automation', () => {
         const mockSpecialNeedsInput = { checked: false };
         const mockSubmitBtn = { click: jest.fn() };
 
-        document.querySelector.mockImplementation((selector) => {
-            if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_INPUT) return mockLicenceInput;
-            if (selector === DVSAAutomation.SELECTORS.SPECIAL_NEEDS_NONE) return mockSpecialNeedsInput;
-            if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+        document.getElementById.mockImplementation((id) => {
+            if (id === DVSAAutomation.SELECTORS.DRIVING_LICENCE_INPUT.id) return mockLicenceInput;
+            if (id === DVSAAutomation.SELECTORS.SPECIAL_NEEDS_NONE.id) return mockSpecialNeedsInput;
+            if (id === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT.id) return mockSubmitBtn;
             return null;
         });
 
@@ -264,21 +264,21 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(mockSubmitBtn.click).toHaveBeenCalled();
     });
 
-    test('enterLicenceDetails uses passed element without querySelector for input', () => {
+    test('enterLicenceDetails uses passed element without getElementById for input', () => {
         const mockLicenceInput = { value: '' };
         const mockSpecialNeedsInput = { checked: false };
         const mockSubmitBtn = { click: jest.fn() };
 
-        document.querySelector.mockImplementation((selector) => {
+        document.getElementById.mockImplementation((id) => {
              // Only mock secondary elements, input should be passed
-            if (selector === DVSAAutomation.SELECTORS.SPECIAL_NEEDS_NONE) return mockSpecialNeedsInput;
-            if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+            if (id === DVSAAutomation.SELECTORS.SPECIAL_NEEDS_NONE.id) return mockSpecialNeedsInput;
+            if (id === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT.id) return mockSubmitBtn;
             return null;
         });
 
         DVSAAutomation.enterLicenceDetails(mockLicenceInput);
 
-        expect(document.querySelector).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.DRIVING_LICENCE_INPUT);
+        expect(document.getElementById).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.DRIVING_LICENCE_INPUT.id);
         expect(mockLicenceInput.value).toBe(DVSAAutomation.drivingLicenceNumber);
     });
 
@@ -287,8 +287,8 @@ describe('DVSA Driving Test Booking Automation', () => {
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
         const mockSubmitBtn = { click: jest.fn() };
 
-        document.querySelector.mockImplementation((selector) => {
-             if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+        document.getElementById.mockImplementation((id) => {
+             if (id === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT.id) return mockSubmitBtn;
              return null;
         });
 
@@ -303,8 +303,8 @@ describe('DVSA Driving Test Booking Automation', () => {
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
         const mockSubmitBtn = { click: jest.fn() };
 
-        document.querySelector.mockImplementation((selector) => {
-             if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+        document.getElementById.mockImplementation((id) => {
+             if (id === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT.id) return mockSubmitBtn;
              return null;
         });
 
@@ -320,10 +320,10 @@ describe('DVSA Driving Test Booking Automation', () => {
         const mockInstructorInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
 
-        document.querySelector.mockImplementation((selector) => {
-            if (selector === DVSAAutomation.SELECTORS.TEST_DATE_INPUT) return mockDateInput;
-            if (selector === DVSAAutomation.SELECTORS.INSTRUCTOR_INPUT) return mockInstructorInput;
-            if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+        document.getElementById.mockImplementation((id) => {
+            if (id === DVSAAutomation.SELECTORS.TEST_DATE_INPUT.id) return mockDateInput;
+            if (id === DVSAAutomation.SELECTORS.INSTRUCTOR_INPUT.id) return mockInstructorInput;
+            if (id === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT.id) return mockSubmitBtn;
             return null;
         });
 
@@ -336,21 +336,21 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(mockSubmitBtn.click).toHaveBeenCalled();
     });
 
-    test('enterTestDate uses passed element without querySelector for input', () => {
+    test('enterTestDate uses passed element without getElementById for input', () => {
         const mockDateInput = { value: '' };
         const mockInstructorInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
 
-        document.querySelector.mockImplementation((selector) => {
+        document.getElementById.mockImplementation((id) => {
              // Only mock secondary elements
-            if (selector === DVSAAutomation.SELECTORS.INSTRUCTOR_INPUT) return mockInstructorInput;
-            if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+            if (id === DVSAAutomation.SELECTORS.INSTRUCTOR_INPUT.id) return mockInstructorInput;
+            if (id === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT.id) return mockSubmitBtn;
             return null;
         });
 
         DVSAAutomation.enterTestDate(mockDateInput);
 
-        expect(document.querySelector).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.TEST_DATE_INPUT);
+        expect(document.getElementById).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.TEST_DATE_INPUT.id);
         expect(mockDateInput.value).toBe(DVSAAutomation.testDate);
     });
 
@@ -359,8 +359,8 @@ describe('DVSA Driving Test Booking Automation', () => {
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
         const mockSubmitBtn = { click: jest.fn() };
 
-        document.querySelector.mockImplementation((selector) => {
-             if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+        document.getElementById.mockImplementation((id) => {
+             if (id === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT.id) return mockSubmitBtn;
              return null;
         });
 
@@ -375,8 +375,8 @@ describe('DVSA Driving Test Booking Automation', () => {
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
         const mockSubmitBtn = { click: jest.fn() };
 
-        document.querySelector.mockImplementation((selector) => {
-             if (selector === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT) return mockSubmitBtn;
+        document.getElementById.mockImplementation((id) => {
+             if (id === DVSAAutomation.SELECTORS.DRIVING_LICENCE_SUBMIT.id) return mockSubmitBtn;
              return null;
         });
 
@@ -391,9 +391,9 @@ describe('DVSA Driving Test Booking Automation', () => {
         const mockPostcodeInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
 
-        document.querySelector.mockImplementation((selector) => {
-            if (selector === DVSAAutomation.SELECTORS.POSTCODE_INPUT) return mockPostcodeInput;
-            if (selector === DVSAAutomation.SELECTORS.POSTCODE_SUBMIT) return mockSubmitBtn;
+        document.getElementById.mockImplementation((id) => {
+            if (id === DVSAAutomation.SELECTORS.POSTCODE_INPUT.id) return mockPostcodeInput;
+            if (id === DVSAAutomation.SELECTORS.POSTCODE_SUBMIT.id) return mockSubmitBtn;
             return null;
         });
 
@@ -408,8 +408,8 @@ describe('DVSA Driving Test Booking Automation', () => {
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
         const mockSubmitBtn = { click: jest.fn() };
 
-        document.querySelector.mockImplementation((selector) => {
-             if (selector === DVSAAutomation.SELECTORS.POSTCODE_SUBMIT) return mockSubmitBtn;
+        document.getElementById.mockImplementation((id) => {
+             if (id === DVSAAutomation.SELECTORS.POSTCODE_SUBMIT.id) return mockSubmitBtn;
              return null;
         });
 
@@ -424,8 +424,8 @@ describe('DVSA Driving Test Booking Automation', () => {
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
         const mockSubmitBtn = { click: jest.fn() };
 
-        document.querySelector.mockImplementation((selector) => {
-             if (selector === DVSAAutomation.SELECTORS.POSTCODE_SUBMIT) return mockSubmitBtn;
+        document.getElementById.mockImplementation((id) => {
+             if (id === DVSAAutomation.SELECTORS.POSTCODE_SUBMIT.id) return mockSubmitBtn;
              return null;
         });
 
@@ -435,22 +435,21 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(mockSubmitBtn.click).not.toHaveBeenCalled();
     });
 
-    test('enterPostcode uses passed element without querySelector for input', () => {
+    test('enterPostcode uses passed element without getElementById for input', () => {
         DVSAAutomation.testDate = '01/01/2025';
-        DVSAAutomation.postcode = 'SW1A 1AA';
         DVSAAutomation.postcode = 'SW1A 1AA';
         const mockPostcodeInput = { value: '' };
         const mockSubmitBtn = { click: jest.fn() };
 
-        document.querySelector.mockImplementation((selector) => {
+        document.getElementById.mockImplementation((id) => {
              // Only mock secondary elements
-            if (selector === DVSAAutomation.SELECTORS.POSTCODE_SUBMIT) return mockSubmitBtn;
+            if (id === DVSAAutomation.SELECTORS.POSTCODE_SUBMIT.id) return mockSubmitBtn;
             return null;
         });
 
         DVSAAutomation.enterPostcode(mockPostcodeInput);
 
-        expect(document.querySelector).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.POSTCODE_INPUT);
+        expect(document.getElementById).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.POSTCODE_INPUT.id);
         expect(mockPostcodeInput.value).toBe(DVSAAutomation.postcode);
     });
 
@@ -459,8 +458,11 @@ describe('DVSA Driving Test Booking Automation', () => {
         const mockFetchBtn = { click: jest.fn() };
 
         document.querySelector.mockImplementation((selector) => {
-            if (selector === DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS) return mockResults;
-            if (selector === DVSAAutomation.SELECTORS.FETCH_MORE_CENTRES) return mockFetchBtn;
+            if (selector === DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS.query) return mockResults;
+            return null;
+        });
+        document.getElementById.mockImplementation((id) => {
+            if (id === DVSAAutomation.SELECTORS.FETCH_MORE_CENTRES.id) return mockFetchBtn;
             return null;
         });
 
@@ -475,24 +477,24 @@ describe('DVSA Driving Test Booking Automation', () => {
         const mockResults = { children: { length: 5 } };
         const mockFetchBtn = { click: jest.fn() };
 
-        document.querySelector.mockImplementation((selector) => {
+        document.getElementById.mockImplementation((id) => {
              // Only mock secondary elements
-            if (selector === DVSAAutomation.SELECTORS.FETCH_MORE_CENTRES) return mockFetchBtn;
+            if (id === DVSAAutomation.SELECTORS.FETCH_MORE_CENTRES.id) return mockFetchBtn;
             return null;
         });
 
         DVSAAutomation.checkResults(mockResults);
 
-        expect(document.querySelector).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS);
+        expect(document.querySelector).not.toHaveBeenCalledWith(DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS.query);
         expect(mockFetchBtn.click).toHaveBeenCalled();
     });
 
     test('checkResults handles missing fetch more centres button gracefully', () => {
         const mockResults = { children: { length: 5 } };
 
-        document.querySelector.mockImplementation((selector) => {
+        document.getElementById.mockImplementation((id) => {
              // Mock FETCH_MORE_CENTRES to return null
-            if (selector === DVSAAutomation.SELECTORS.FETCH_MORE_CENTRES) return null;
+            if (id === DVSAAutomation.SELECTORS.FETCH_MORE_CENTRES.id) return null;
             return null;
         });
 
@@ -507,7 +509,7 @@ describe('DVSA Driving Test Booking Automation', () => {
         const mockResults = { children: { length: 15 } }; // Enough centres so no fetch more
 
         document.querySelector.mockImplementation((selector) => {
-            if (selector === DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS) return mockResults;
+            if (selector === DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS.query) return mockResults;
             return null;
         });
 
@@ -535,7 +537,8 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         for (const { selector, step } of testCases) {
             const mockElement = { };
-            document.querySelector.mockImplementation((sel) => sel === selector ? mockElement : null);
+            document.getElementById.mockImplementation((id) => id === selector.id ? mockElement : null);
+            document.querySelector.mockImplementation((query) => query === selector.query ? mockElement : null);
 
             DVSAAutomation.handlePage();
 
@@ -551,8 +554,11 @@ describe('DVSA Driving Test Booking Automation', () => {
         const mockPostcode = {};
 
         document.querySelector.mockImplementation((selector) => {
-            if (selector === DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS) return mockResults;
-            if (selector === DVSAAutomation.SELECTORS.POSTCODE_INPUT) return mockPostcode; // Both exist
+            if (selector === DVSAAutomation.SELECTORS.TEST_CENTRE_RESULTS.query) return mockResults;
+            return null;
+        });
+        document.getElementById.mockImplementation((id) => {
+            if (id === DVSAAutomation.SELECTORS.POSTCODE_INPUT.id) return mockPostcode;
             return null;
         });
 
