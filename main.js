@@ -348,7 +348,13 @@ const DVSAAutomation = (function () {
             }
 
             const toast = app.toastElement;
-            toast.textContent = message;
+
+            // ⚡ Bolt Optimization: Conditionally update textContent to prevent redundant DOM reflows
+            // during high-frequency updates (e.g., countdowns).
+            // Benchmark: Eliminates unnecessary layout recalculations when text remains unchanged.
+            if (toast.textContent !== message) {
+                toast.textContent = message;
+            }
 
             if (!document.body.contains(toast)) {
                 document.body.appendChild(toast);
