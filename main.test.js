@@ -24,7 +24,25 @@ global.document = {
 global.window = {
     addEventListener: jest.fn(),
     location: { href: '' },
-    crypto: { getRandomValues: jest.fn() }
+    crypto: { getRandomValues: jest.fn() },
+    AudioContext: jest.fn().mockImplementation(() => ({
+        createOscillator: jest.fn().mockReturnValue({
+            type: '',
+            frequency: { value: 0 },
+            connect: jest.fn(),
+            start: jest.fn(),
+            stop: jest.fn()
+        }),
+        createGain: jest.fn().mockReturnValue({
+            gain: {
+                setValueAtTime: jest.fn(),
+                exponentialRampToValueAtTime: jest.fn()
+            },
+            connect: jest.fn()
+        }),
+        destination: {},
+        currentTime: 0
+    }))
 };
 global.console = {
     log: jest.fn(),
@@ -210,6 +228,43 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(toast.textContent).toBe('Msg 2');
     });
 
+    test('playAlertSound initializes AudioContext and plays sound', () => {
+        global.window.AudioContext.mockClear();
+        DVSAAutomation.playAlertSound(440, 1);
+        expect(global.window.AudioContext).toHaveBeenCalled();
+        const mockCtx = global.window.AudioContext.mock.results[0].value;
+        expect(mockCtx.createOscillator).toHaveBeenCalled();
+        expect(mockCtx.createGain).toHaveBeenCalled();
+
+        // Cannot easily check the nested node calls without complex mock setup,
+        // but verifying context creation provides basic coverage.
+    });
+
+    test('playAlertSound logs warning if AudioContext is not supported', () => {
+        const originalAudioContext = global.window.AudioContext;
+        delete global.window.AudioContext; // Simulate unsupported environment
+        const spyWarn = jest.spyOn(DVSAAutomation.Logger, 'warn');
+
+        DVSAAutomation.playAlertSound();
+
+        expect(spyWarn).toHaveBeenCalledWith('Web Audio API is not supported in this browser. Alert sound will not play.');
+
+        global.window.AudioContext = originalAudioContext; // Restore
+        spyWarn.mockRestore();
+    });
+
+    test('playAlertSound catches and securely logs errors', () => {
+        global.window.AudioContext.mockImplementationOnce(() => {
+            throw new Error('Test Audio Error');
+        });
+        const spyError = jest.spyOn(DVSAAutomation.Logger, 'error');
+
+        DVSAAutomation.playAlertSound();
+
+        expect(spyError).toHaveBeenCalledWith('Failed to play alert sound. Error securely suppressed.');
+        spyError.mockRestore();
+    });
+
     test('showToast prevents overlapping by clearing previous timeout', () => {
         document.body.contains.mockReturnValue(true);
         const spyClearTimeout = jest.spyOn(global, 'clearTimeout');
@@ -297,6 +352,7 @@ describe('DVSA Driving Test Booking Automation', () => {
     test('enterLicenceDetails aborts if licence is invalid', () => {
         DVSAAutomation.drivingLicenceNumber = 'INVALID';
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const spyPlayAlertSound = jest.spyOn(DVSAAutomation, 'playAlertSound');
         const mockSubmitBtn = { click: jest.fn() };
 
         document.getElementById.mockImplementation((id) => {
@@ -306,6 +362,7 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         DVSAAutomation.enterLicenceDetails();
 
+        expect(spyPlayAlertSound).toHaveBeenCalled();
         expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid or default Driving Licence'));
         expect(mockSubmitBtn.click).not.toHaveBeenCalled();
     });
@@ -313,6 +370,7 @@ describe('DVSA Driving Test Booking Automation', () => {
     test('enterLicenceDetails aborts if licence is default', () => {
         DVSAAutomation.drivingLicenceNumber = DVSAAutomation.DEFAULT_LICENCE;
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const spyPlayAlertSound = jest.spyOn(DVSAAutomation, 'playAlertSound');
         const mockSubmitBtn = { click: jest.fn() };
 
         document.getElementById.mockImplementation((id) => {
@@ -322,6 +380,7 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         DVSAAutomation.enterLicenceDetails();
 
+        expect(spyPlayAlertSound).toHaveBeenCalled();
         expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid or default Driving Licence'));
         expect(mockSubmitBtn.click).not.toHaveBeenCalled();
     });
@@ -369,6 +428,7 @@ describe('DVSA Driving Test Booking Automation', () => {
     test('enterTestDate aborts if test date is invalid', () => {
         DVSAAutomation.testDate = 'INVALID';
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const spyPlayAlertSound = jest.spyOn(DVSAAutomation, 'playAlertSound');
         const mockSubmitBtn = { click: jest.fn() };
 
         document.getElementById.mockImplementation((id) => {
@@ -378,6 +438,7 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         DVSAAutomation.enterTestDate();
 
+        expect(spyPlayAlertSound).toHaveBeenCalled();
         expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid or default Test Date'));
         expect(mockSubmitBtn.click).not.toHaveBeenCalled();
     });
@@ -385,6 +446,7 @@ describe('DVSA Driving Test Booking Automation', () => {
     test('enterTestDate aborts if test date is default', () => {
         DVSAAutomation.testDate = DVSAAutomation.DEFAULT_DATE;
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const spyPlayAlertSound = jest.spyOn(DVSAAutomation, 'playAlertSound');
         const mockSubmitBtn = { click: jest.fn() };
 
         document.getElementById.mockImplementation((id) => {
@@ -394,6 +456,7 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         DVSAAutomation.enterTestDate();
 
+        expect(spyPlayAlertSound).toHaveBeenCalled();
         expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid or default Test Date'));
         expect(mockSubmitBtn.click).not.toHaveBeenCalled();
     });
@@ -418,6 +481,7 @@ describe('DVSA Driving Test Booking Automation', () => {
     test('enterPostcode aborts if postcode is invalid', () => {
         DVSAAutomation.postcode = 'INVALID';
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const spyPlayAlertSound = jest.spyOn(DVSAAutomation, 'playAlertSound');
         const mockSubmitBtn = { click: jest.fn() };
 
         document.getElementById.mockImplementation((id) => {
@@ -427,6 +491,7 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         DVSAAutomation.enterPostcode();
 
+        expect(spyPlayAlertSound).toHaveBeenCalled();
         expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid or default Postcode'));
         expect(mockSubmitBtn.click).not.toHaveBeenCalled();
     });
@@ -434,6 +499,7 @@ describe('DVSA Driving Test Booking Automation', () => {
     test('enterPostcode aborts if postcode is default', () => {
         DVSAAutomation.postcode = DVSAAutomation.DEFAULT_POSTCODE;
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const spyPlayAlertSound = jest.spyOn(DVSAAutomation, 'playAlertSound');
         const mockSubmitBtn = { click: jest.fn() };
 
         document.getElementById.mockImplementation((id) => {
@@ -443,6 +509,7 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         DVSAAutomation.enterPostcode();
 
+        expect(spyPlayAlertSound).toHaveBeenCalled();
         expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Invalid or default Postcode'));
         expect(mockSubmitBtn.click).not.toHaveBeenCalled();
     });

@@ -354,6 +354,38 @@ const DVSAAutomation = (function () {
             app.showToast("Configuration saved. Please reload the page.");
         },
 
+        /**
+         * Plays a short alert beep using the Web Audio API.
+         * @param {number} [frequency=440] - The frequency of the beep in Hz.
+         * @param {number} [duration=1] - The duration of the beep in seconds.
+         */
+        playAlertSound(frequency = 440, duration = 1) {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) {
+                    app.Logger.warn('Web Audio API is not supported in this browser. Alert sound will not play.');
+                    return;
+                }
+                const ctx = new AudioContext();
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                oscillator.type = 'sine';
+                oscillator.frequency.value = frequency;
+
+                gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + duration);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+
+                oscillator.start();
+                oscillator.stop(ctx.currentTime + duration);
+            } catch (error) {
+                app.Logger.error('Failed to play alert sound. Error securely suppressed.');
+            }
+        },
+
         showToast(message, duration = 3000) {
             if (!app.toastElement) {
                 const toast = document.createElement('div');
@@ -405,10 +437,18 @@ const DVSAAutomation = (function () {
         },
 
 
+        /**
+         * Smoothly scrolls an element into the center of the viewport.
+         * @param {HTMLElement} element - The DOM element to scroll to.
+         */
         scrollToElement(element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         },
 
+        /**
+         * Selects the test type (car) if the button is available on the page.
+         * @param {HTMLElement} [element] - Optional DOM element to use instead of querying.
+         */
         selectTestType(element) {
             Logger.info('Running selectTestType...');
             app.showToast('Selecting test type...');
@@ -418,9 +458,15 @@ const DVSAAutomation = (function () {
             }
         },
 
+        /**
+         * Enters the configured driving licence details and submits the form.
+         * Aborts and plays an alert sound if the configuration is invalid or default.
+         * @param {HTMLElement} [element] - Optional DOM element for the driving licence input.
+         */
         enterLicenceDetails(element) {
             Logger.info('Running enterLicenceDetails...');
             if (!app.isValidLicence(app.drivingLicenceNumber) || app.drivingLicenceNumber === app.DEFAULT_LICENCE) {
+                app.playAlertSound();
                 app.showToast("Invalid or default Driving Licence configured. Stopping.");
                 return;
             }
@@ -441,9 +487,15 @@ const DVSAAutomation = (function () {
             }
         },
 
+        /**
+         * Enters the configured test date and optional instructor reference, then submits.
+         * Aborts and plays an alert sound if the test date is invalid or default.
+         * @param {HTMLElement} [element] - Optional DOM element for the test date input.
+         */
         enterTestDate(element) {
             Logger.info('Running enterTestDate...');
             if (!app.isValidDate(app.testDate) || app.testDate === app.DEFAULT_DATE) {
+                app.playAlertSound();
                 app.showToast("Invalid or default Test Date configured. Stopping.");
                 return;
             }
@@ -466,9 +518,15 @@ const DVSAAutomation = (function () {
             }
         },
 
+        /**
+         * Enters the configured postcode to search for test centres and submits.
+         * Aborts and plays an alert sound if the postcode is invalid or default.
+         * @param {HTMLElement} [element] - Optional DOM element for the postcode input.
+         */
         enterPostcode(element) {
             Logger.info('Running enterPostcode...');
             if (!app.isValidPostcode(app.postcode) || app.postcode === app.DEFAULT_POSTCODE) {
+                app.playAlertSound();
                 app.showToast("Invalid or default Postcode configured. Stopping.");
                 return;
             }
@@ -484,6 +542,11 @@ const DVSAAutomation = (function () {
             }
         },
 
+        /**
+         * Checks the test centre search results. If too few are found, fetches more.
+         * Automatically sleeps for a random duration before reloading the booking flow.
+         * @param {HTMLElement} [element] - Optional DOM element for the test centre results container.
+         */
         checkResults(element) {
             Logger.info('Running checkResults...');
             const results = element || app.getElement(app.SELECTORS.TEST_CENTRE_RESULTS);
@@ -520,6 +583,10 @@ const DVSAAutomation = (function () {
             }
         },
 
+        /**
+         * Handles routing logic by identifying the current page based on available DOM elements
+         * and triggering the corresponding action with a random delay to simulate human interaction.
+         */
         handlePage() {
             if (getValue('isPaused', false)) {
                 app.showToast('Automation is paused');
