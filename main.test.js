@@ -2,15 +2,15 @@
 global.document = {
     head: { appendChild: jest.fn() },
     body: {
-        appendChild: jest.fn(),
-        removeChild: jest.fn(),
-        contains: jest.fn().mockReturnValue(true)
+        appendChild: jest.fn((el) => { el.parentNode = global.document.body; }),
+        removeChild: jest.fn((el) => { el.parentNode = null; })
     },
     createElement: jest.fn().mockReturnValue({
         innerHTML: '',
         style: {},
         classList: { add: jest.fn(), remove: jest.fn() },
-        scrollIntoView: jest.fn()
+        scrollIntoView: jest.fn(),
+        parentNode: null
     }),
     querySelector: jest.fn(),
     getElementById: jest.fn(function(id) {
@@ -53,8 +53,6 @@ describe('DVSA Driving Test Booking Automation', () => {
         }
         DVSAAutomation.actionTimeout = null;
         DVSAAutomation.countdownInterval = null;
-        // Reset mock default behavior
-        document.body.contains.mockReturnValue(true);
     });
 
     afterEach(() => {
@@ -168,9 +166,6 @@ describe('DVSA Driving Test Booking Automation', () => {
     });
 
     test('showToast creates and removes toast element', () => {
-        // Mock contains to return false first (for append check), then true (for removal check)
-        document.body.contains.mockReturnValueOnce(false).mockReturnValue(true);
-
         const message = 'Test Toast';
         const duration = 1000;
 
@@ -195,15 +190,15 @@ describe('DVSA Driving Test Booking Automation', () => {
 
     test('showToast reuses existing toast element', () => {
         // Call 1: Should create and append
-        document.body.contains.mockReturnValueOnce(false).mockReturnValue(true);
         DVSAAutomation.showToast('Msg 1', 1000);
 
         expect(document.createElement).toHaveBeenCalledTimes(1);
         const toast = DVSAAutomation.toastElement;
         expect(toast.textContent).toBe('Msg 1');
+        // Set parentNode to simulate being in the DOM
+        toast.parentNode = document.body;
 
         // Call 2: Should reuse
-        document.body.contains.mockReturnValue(true); // Already in DOM
         DVSAAutomation.showToast('Msg 2', 1000);
 
         expect(document.createElement).toHaveBeenCalledTimes(1); // Count remains 1
@@ -211,7 +206,8 @@ describe('DVSA Driving Test Booking Automation', () => {
     });
 
     test('showToast prevents overlapping by clearing previous timeout', () => {
-        document.body.contains.mockReturnValue(true);
+        // Assume toast is in the DOM
+        if (DVSAAutomation.toastElement) DVSAAutomation.toastElement.parentNode = document.body;
         const spyClearTimeout = jest.spyOn(global, 'clearTimeout');
 
         DVSAAutomation.showToast('Msg 1', 1000);
@@ -224,10 +220,10 @@ describe('DVSA Driving Test Booking Automation', () => {
     });
 
     test('showToast avoids redundant requestAnimationFrame calls when already visible', () => {
-        document.body.contains.mockReturnValue(true);
-
         // First call: Should trigger animation
         DVSAAutomation.showToast('Msg 1', 1000);
+        // Assume toast is in the DOM
+        DVSAAutomation.toastElement.parentNode = document.body;
         // Ensure it's fully visible
         DVSAAutomation.toastElement.style.opacity = '1';
 

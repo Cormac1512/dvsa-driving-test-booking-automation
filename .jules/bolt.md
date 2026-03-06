@@ -13,3 +13,7 @@
 ## 2025-02-13 - Avoid Redundant textContent Updates
 **Learning:** Frequent redundant updates to `element.textContent` trigger unnecessary layout recalculations and DOM reflows. In a script that heavily uses toast notifications for countdowns (updating text every second), this churn can cause significant performance overhead and lag in the UI.
 **Action:** Implemented a simple check (`if (element.textContent !== newText)`) before assigning to `textContent`. Always apply this pattern when updating text or styles in frequent intervals like `requestAnimationFrame` or `setInterval`.
+
+## 2025-02-13 - Replace contains() with parentNode checks
+**Learning:** Checking DOM membership with `document.body.contains(toast)` is an O(N) tree traversal operation, which is highly inefficient in large DOMs when executed frequently (e.g., inside an interval or `requestAnimationFrame`).
+**Action:** Use an O(1) property access check, such as `toast.parentNode === document.body` or `toast.parentNode !== null`, to verify if an element is currently in the DOM. This reduces performance overhead substantially during frequent UI updates.
