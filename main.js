@@ -650,6 +650,15 @@ const DVSAAutomation = (function () {
         },
 
         init() {
+            // Anti-bot evasion: override navigator.webdriver to prevent headless browser detection
+            try {
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined
+                });
+            } catch (error) {
+                app.Logger.error('Failed to override navigator.webdriver');
+            }
+
             // Ensure the script runs after the DOM is ready
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', app.handlePage);
