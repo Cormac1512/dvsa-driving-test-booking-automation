@@ -722,6 +722,60 @@ describe('DVSA Driving Test Booking Automation', () => {
             const id = DVSAAutomation.countdown(10, () => {}, () => {});
             expect(id).toBeDefined();
         });
+
+        test('safely catches and logs onTick errors initially without throwing', () => {
+            const spyError = jest.spyOn(DVSAAutomation.Logger, 'error');
+            const onTick = jest.fn().mockImplementation(() => {
+                throw new Error('Test Error');
+            });
+            const onComplete = jest.fn();
+
+            const intervalId = DVSAAutomation.countdown(3, onTick, onComplete);
+
+            expect(intervalId).toBeNull();
+            expect(spyError).toHaveBeenCalledWith('Countdown execution failed securely. Stack trace suppressed to prevent leakage.');
+        });
+
+        test('safely catches and logs onTick errors inside setInterval without throwing', () => {
+            const spyError = jest.spyOn(DVSAAutomation.Logger, 'error');
+            const spyClearInterval = jest.spyOn(global, 'clearInterval');
+            const onTick = jest.fn()
+                .mockImplementationOnce(() => {}) // First call (initial) succeeds
+                .mockImplementationOnce(() => {   // Second call (inside interval) fails
+                    throw new Error('Test Error');
+                });
+            const onComplete = jest.fn();
+
+            const intervalId = DVSAAutomation.countdown(3, onTick, onComplete);
+
+            expect(intervalId).toBeDefined();
+            expect(spyError).not.toHaveBeenCalled();
+
+            // Fast-forward to trigger interval and the error
+            jest.advanceTimersByTime(1000);
+
+            expect(spyClearInterval).toHaveBeenCalledWith(intervalId);
+            expect(spyError).toHaveBeenCalledWith('Countdown execution failed securely. Stack trace suppressed to prevent leakage.');
+        });
+
+        test('safely catches and logs onComplete errors inside setInterval without throwing', () => {
+            const spyError = jest.spyOn(DVSAAutomation.Logger, 'error');
+            const spyClearInterval = jest.spyOn(global, 'clearInterval');
+            const onTick = jest.fn();
+            const onComplete = jest.fn().mockImplementation(() => {
+                throw new Error('Test Error');
+            });
+
+            const intervalId = DVSAAutomation.countdown(1, onTick, onComplete);
+
+            // Fast-forward to trigger completion and the error
+            jest.advanceTimersByTime(1000);
+
+            // clearInterval is called BEFORE onComplete, but error handler also calls it.
+            // So it might be called 1 or 2 times depending on how it's written, we just ensure it was called.
+            expect(spyClearInterval).toHaveBeenCalledWith(intervalId);
+            expect(spyError).toHaveBeenCalledWith('Countdown execution failed securely. Stack trace suppressed to prevent leakage.');
+        });
     });
 
 

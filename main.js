@@ -261,14 +261,25 @@ const DVSAAutomation = (function () {
             }
 
             let remaining = seconds;
-            onTick(remaining);
+            try {
+                onTick(remaining);
+            } catch (error) {
+                app.Logger.error('Countdown execution failed securely. Stack trace suppressed to prevent leakage.');
+                return null;
+            }
+
             const intervalId = setInterval(() => {
-                remaining--;
-                if (remaining <= 0) {
+                try {
+                    remaining--;
+                    if (remaining <= 0) {
+                        clearInterval(intervalId);
+                        if (onComplete) onComplete();
+                    } else {
+                        onTick(remaining);
+                    }
+                } catch (error) {
                     clearInterval(intervalId);
-                    if (onComplete) onComplete();
-                } else {
-                    onTick(remaining);
+                    app.Logger.error('Countdown execution failed securely. Stack trace suppressed to prevent leakage.');
                 }
             }, 1000);
             return intervalId;
