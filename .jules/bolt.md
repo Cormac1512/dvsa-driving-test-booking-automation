@@ -17,3 +17,7 @@
 ## 2025-02-13 - Replace contains() with parentNode checks
 **Learning:** Checking DOM membership with `document.body.contains(toast)` is an O(N) tree traversal operation, which is highly inefficient in large DOMs when executed frequently (e.g., inside an interval or `requestAnimationFrame`).
 **Action:** Use an O(1) property access check, such as `toast.parentNode === document.body` or `toast.parentNode !== null`, to verify if an element is currently in the DOM. This reduces performance overhead substantially during frequent UI updates.
+
+## 2025-02-13 - AudioContext Resource Exhaustion
+**Learning:** Instantiating `new AudioContext()` on every function call for an alert sound causes a memory leak and quickly leads to a `DOMException` crash. Browsers enforce a strict hardware limit (often ~6 concurrent contexts).
+**Action:** Always cache hardware-backed browser APIs (like Web Audio API context) as singletons or application-level properties. When reusing a cached context, check `ctx.state === 'suspended'` and call `ctx.resume()` to handle browser autoplay policy restrictions gracefully.
