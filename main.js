@@ -197,19 +197,47 @@ const DVSAAutomation = (function () {
             return selector.id ? document.getElementById(selector.id) : document.querySelector(selector.query);
         },
 
+        /**
+         * Validates an action configuration value against a validation function and default value.
+         * Plays an alert sound and shows a toast warning if the value is invalid or default.
+         * @param {any} value - The configuration value to validate.
+         * @param {any} defaultValue - The default value to check against.
+         * @param {function} validationFn - The function to validate the value.
+         * @param {string} errorMsg - The message to display if validation fails.
+         * @returns {boolean} True if the configuration is valid, false otherwise.
+         */
+        validateActionConfig(value, defaultValue, validationFn, errorMsg) {
+            if (!validationFn(value) || value === defaultValue) {
+                app.playAlertSound();
+                app.showToast(errorMsg);
+                return false;
+            }
+            return true;
+        },
+
+        /**
+         * Prompts the user to update a setting. Loops until a valid input is provided or the prompt is cancelled.
+         * @param {string} key - The setting key in the app object and storage.
+         * @param {string} promptMsg - The message to display in the prompt.
+         * @param {function} validationFn - The function to validate the user input.
+         * @param {string} errorMessage - The error message to alert if input is invalid.
+         * @param {function} [parser=(val)=>val] - Optional function to parse the input before saving.
+         * @returns {boolean} True if the setting was updated, false if cancelled.
+         */
         updateSetting(key, promptMsg, validationFn, errorMessage, parser = (val) => val) {
             const currentValue = app[key];
             let newValue = prompt(promptMsg, currentValue);
-            if (newValue !== null) {
+
+            while (newValue !== null) {
                 newValue = newValue.trim();
                 if (validationFn(newValue)) {
                     const parsedValue = parser(newValue);
                     setValue(key, parsedValue);
                     app[key] = parsedValue;
                     return true;
-                } else {
-                    alert(errorMessage);
                 }
+                alert(errorMessage);
+                newValue = prompt(promptMsg, newValue);
             }
             return false;
         },
@@ -478,9 +506,7 @@ const DVSAAutomation = (function () {
          */
         enterLicenceDetails(element) {
             Logger.info('Running enterLicenceDetails...');
-            if (!app.isValidLicence(app.drivingLicenceNumber) || app.drivingLicenceNumber === app.DEFAULT_LICENCE) {
-                app.playAlertSound();
-                app.showToast("Invalid or default Driving Licence configured. Stopping.");
+            if (!app.validateActionConfig(app.drivingLicenceNumber, app.DEFAULT_LICENCE, app.isValidLicence, "Invalid or default Driving Licence configured. Stopping.")) {
                 return;
             }
             app.showToast('Entering licence details...');
@@ -507,9 +533,7 @@ const DVSAAutomation = (function () {
          */
         enterTestDate(element) {
             Logger.info('Running enterTestDate...');
-            if (!app.isValidDate(app.testDate) || app.testDate === app.DEFAULT_DATE) {
-                app.playAlertSound();
-                app.showToast("Invalid or default Test Date configured. Stopping.");
+            if (!app.validateActionConfig(app.testDate, app.DEFAULT_DATE, app.isValidDate, "Invalid or default Test Date configured. Stopping.")) {
                 return;
             }
             app.showToast('Entering test date...');
@@ -538,9 +562,7 @@ const DVSAAutomation = (function () {
          */
         enterPostcode(element) {
             Logger.info('Running enterPostcode...');
-            if (!app.isValidPostcode(app.postcode) || app.postcode === app.DEFAULT_POSTCODE) {
-                app.playAlertSound();
-                app.showToast("Invalid or default Postcode configured. Stopping.");
+            if (!app.validateActionConfig(app.postcode, app.DEFAULT_POSTCODE, app.isValidPostcode, "Invalid or default Postcode configured. Stopping.")) {
                 return;
             }
             app.showToast('Entering postcode...');
