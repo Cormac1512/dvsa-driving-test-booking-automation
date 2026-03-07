@@ -249,6 +249,8 @@ describe('DVSA Driving Test Booking Automation', () => {
     });
 
     test('playAlertSound catches and securely logs errors', () => {
+        // Clear out cached audioCtx so mock Implementation Once works
+        DVSAAutomation.audioCtx = null;
         global.window.AudioContext.mockImplementationOnce(() => {
             throw new Error('Test Audio Error');
         });

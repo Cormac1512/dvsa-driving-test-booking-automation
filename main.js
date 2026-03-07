@@ -377,7 +377,19 @@ const DVSAAutomation = (function () {
                     app.Logger.warn('Web Audio API is not supported in this browser. Alert sound will not play.');
                     return;
                 }
-                const ctx = new AudioContext();
+
+                // Cache AudioContext to prevent resource exhaustion (browsers cap concurrent contexts)
+                if (!app.audioCtx) {
+                    app.audioCtx = new AudioContext();
+                }
+
+                const ctx = app.audioCtx;
+
+                // Ensure the context is running before playing
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
+
                 const oscillator = ctx.createOscillator();
                 const gainNode = ctx.createGain();
 
