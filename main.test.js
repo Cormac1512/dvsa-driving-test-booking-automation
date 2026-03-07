@@ -829,6 +829,45 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(DVSAAutomation.isValidInstructorOptional('123a')).toBe(false);
     });
 
+    test('validateActionConfig returns true for valid non-default input', () => {
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const spyPlayAlertSound = jest.spyOn(DVSAAutomation, 'playAlertSound');
+        const validationFn = jest.fn().mockReturnValue(true);
+
+        const result = DVSAAutomation.validateActionConfig('valid_value', 'default_value', validationFn, 'Error message');
+
+        expect(result).toBe(true);
+        expect(validationFn).toHaveBeenCalledWith('valid_value');
+        expect(spyShowToast).not.toHaveBeenCalled();
+        expect(spyPlayAlertSound).not.toHaveBeenCalled();
+    });
+
+    test('validateActionConfig returns false and alerts for invalid input', () => {
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const spyPlayAlertSound = jest.spyOn(DVSAAutomation, 'playAlertSound');
+        const validationFn = jest.fn().mockReturnValue(false);
+
+        const result = DVSAAutomation.validateActionConfig('invalid_value', 'default_value', validationFn, 'Error message');
+
+        expect(result).toBe(false);
+        expect(validationFn).toHaveBeenCalledWith('invalid_value');
+        expect(spyShowToast).toHaveBeenCalledWith('Error message');
+        expect(spyPlayAlertSound).toHaveBeenCalled();
+    });
+
+    test('validateActionConfig returns false and alerts for default input', () => {
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const spyPlayAlertSound = jest.spyOn(DVSAAutomation, 'playAlertSound');
+        const validationFn = jest.fn().mockReturnValue(true);
+
+        const result = DVSAAutomation.validateActionConfig('default_value', 'default_value', validationFn, 'Error message');
+
+        expect(result).toBe(false);
+        expect(validationFn).toHaveBeenCalledWith('default_value');
+        expect(spyShowToast).toHaveBeenCalledWith('Error message');
+        expect(spyPlayAlertSound).toHaveBeenCalled();
+    });
+
     test('updateSetting prompts, validates, and saves', () => {
         const key = 'testKey';
         const promptMsg = 'Enter Value:';
@@ -855,7 +894,8 @@ describe('DVSA Driving Test Booking Automation', () => {
         const key = 'testKey';
         DVSAAutomation[key] = 'initial';
 
-        prompt.mockReturnValueOnce('invalid');
+        prompt.mockReturnValueOnce('invalid')
+              .mockReturnValueOnce(null); // Cancel on retry to exit loop
         const validator = jest.fn().mockReturnValue(false);
 
         const result = DVSAAutomation.updateSetting(key, 'msg', validator, 'Error!');
@@ -915,13 +955,21 @@ describe('DVSA Driving Test Booking Automation', () => {
         prompt.mockReset(); // Reset previous mocks
         prompt
              .mockReturnValueOnce('INVALID_LICENCE') // Licence
+             .mockReturnValueOnce(null)
              .mockReturnValueOnce('INVALID_DATE')    // Date
+             .mockReturnValueOnce(null)
              .mockReturnValueOnce('INVALID_POSTCODE') // Postcode
+             .mockReturnValueOnce(null)
              .mockReturnValueOnce('INVALID_INSTRUCTOR') // Instructor
+             .mockReturnValueOnce(null)
              .mockReturnValueOnce('500') // Min Delay (Too small)
+             .mockReturnValueOnce(null)
              .mockReturnValueOnce('500') // Max Delay (Too small)
+             .mockReturnValueOnce(null)
              .mockReturnValueOnce('500') // Check Results Min Delay (Too small)
-             .mockReturnValueOnce('500'); // Check Results Max Delay (Too small)
+             .mockReturnValueOnce(null)
+             .mockReturnValueOnce('500') // Check Results Max Delay (Too small)
+             .mockReturnValueOnce(null);
 
         DVSAAutomation.configure();
 
