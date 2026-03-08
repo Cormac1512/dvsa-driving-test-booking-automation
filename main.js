@@ -160,6 +160,7 @@ const DVSAAutomation = (function () {
         toastTimeout: null,
         actionTimeout: null,
         countdownInterval: null,
+        audioContext: null,
 
         DEFAULT_LICENCE,
         DEFAULT_DATE,
@@ -405,7 +406,20 @@ const DVSAAutomation = (function () {
                     app.Logger.warn('Web Audio API is not supported in this browser. Alert sound will not play.');
                     return;
                 }
-                const ctx = new AudioContext();
+
+                // ⚡ Bolt Optimization: Cache the AudioContext instance instead of instantiating a new one
+                // on every call. This prevents hardware resource exhaustion and DOMException crashes
+                // (browsers typically limit to ~6 concurrent contexts).
+                if (!app.audioContext) {
+                    app.audioContext = new AudioContext();
+                }
+                const ctx = app.audioContext;
+
+                // Resume the context if it is suspended (e.g., due to autoplay policies)
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
+
                 const oscillator = ctx.createOscillator();
                 const gainNode = ctx.createGain();
 

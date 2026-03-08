@@ -26,6 +26,8 @@ global.window = {
     location: { href: '' },
     crypto: { getRandomValues: jest.fn() },
     AudioContext: jest.fn().mockImplementation(() => ({
+        state: 'suspended',
+        resume: jest.fn().mockImplementation(function() { this.state = 'running'; }),
         createOscillator: jest.fn().mockReturnValue({
             type: '',
             frequency: { value: 0 },
@@ -71,6 +73,7 @@ describe('DVSA Driving Test Booking Automation', () => {
         }
         DVSAAutomation.actionTimeout = null;
         DVSAAutomation.countdownInterval = null;
+        DVSAAutomation.audioContext = null;
     });
 
     afterEach(() => {
@@ -233,6 +236,35 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         // Cannot easily check the nested node calls without complex mock setup,
         // but verifying context creation provides basic coverage.
+    });
+
+    test('playAlertSound reuses existing AudioContext and prevents multiple instantiations', () => {
+        global.window.AudioContext.mockClear();
+
+        // First call should initialize context
+        DVSAAutomation.playAlertSound(440, 1);
+        expect(global.window.AudioContext).toHaveBeenCalledTimes(1);
+
+        // Second call should reuse the cached context
+        DVSAAutomation.playAlertSound(440, 1);
+        expect(global.window.AudioContext).toHaveBeenCalledTimes(1);
+    });
+
+    test('playAlertSound attempts to resume suspended AudioContext', () => {
+        global.window.AudioContext.mockClear();
+
+        // Call it once to initialize and cache the context
+        DVSAAutomation.playAlertSound(440, 1);
+        const mockCtx = global.window.AudioContext.mock.results[0].value;
+
+        // Set it back to suspended manually
+        mockCtx.state = 'suspended';
+        mockCtx.resume.mockClear();
+
+        // Call it again and verify resume was called
+        DVSAAutomation.playAlertSound(440, 1);
+        expect(mockCtx.resume).toHaveBeenCalledTimes(1);
+        expect(mockCtx.state).toBe('running');
     });
 
     test('playAlertSound logs warning if AudioContext is not supported', () => {
