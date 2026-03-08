@@ -275,7 +275,20 @@ const DVSAAutomation = (function () {
                 const range = max - min + 1;
                 const max_range = 4294967296; // 2^32
                 if (range >= max_range) {
-                    return Math.floor(Math.random() * (max - min + 1)) + min;
+                    // Fix: Weak random number generation. Securely generate ranges up to 2^53
+                    // instead of falling back to insecure Math.random().
+                    const MAX_SAFE = 9007199254740992; // 2^53
+                    const limit = Math.floor(MAX_SAFE / range) * range;
+                    let randomValue;
+                    do {
+                        window.crypto.getRandomValues(randomBuffer);
+                        const high = randomBuffer[0] & 0x1FFFFF; // 21 bits
+                        window.crypto.getRandomValues(randomBuffer);
+                        const low = randomBuffer[0]; // 32 bits
+                        randomValue = (high * max_range) + low;
+                    } while (randomValue >= limit);
+
+                    return min + (randomValue % range);
                 }
                 const limit = Math.floor(max_range / range) * range;
 

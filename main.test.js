@@ -142,6 +142,48 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(result).toBeLessThanOrEqual(max);
     });
 
+    test('randomIntBetween securely handles large ranges using rejection sampling', () => {
+        const min = 1;
+        const max = 5000000000; // > 2^32
+        // Range = 5000000000. MAX_SAFE = 9007199254740992
+        // 9007199254740992 % 5000000000 = 254740992
+        // limit = 9007199254740992 - 254740992 = 9007199000000000
+
+        const mockGetRandomValues = jest.fn()
+            .mockImplementationOnce((array) => {
+                // First pass: Force rejection by generating high and low values
+                // that result in a number >= limit (e.g., exactly MAX_SAFE)
+                // MAX_SAFE = (2097151 * 4294967296) + 4294967295
+                array[0] = 0x1FFFFF; // 21 bits high
+                return array;
+            })
+            .mockImplementationOnce((array) => {
+                array[0] = 4294967295; // 32 bits low
+                return array;
+            })
+            .mockImplementationOnce((array) => {
+                // Second pass: Valid random value below limit
+                // Let's generate a result of exactly 2000000000
+                // 2000000000 / 4294967296 = 0 (high)
+                // 2000000000 % 4294967296 = 2000000000 (low)
+                array[0] = 0; // high
+                return array;
+            })
+            .mockImplementationOnce((array) => {
+                array[0] = 2000000000; // low
+                return array;
+            });
+
+        global.window.crypto.getRandomValues = mockGetRandomValues;
+
+        const result = DVSAAutomation.randomIntBetween(min, max);
+
+        // Expect 4 calls (2 for the rejected value, 2 for the accepted value)
+        expect(mockGetRandomValues).toHaveBeenCalledTimes(4);
+        expect(result).toBeGreaterThanOrEqual(min);
+        expect(result).toBeLessThanOrEqual(max);
+    });
+
     test('randomDelay calls callback after timeout', () => {
         const callback = jest.fn();
         const spySetTimeout = jest.spyOn(global, 'setTimeout');
