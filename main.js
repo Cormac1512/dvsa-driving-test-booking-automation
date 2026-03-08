@@ -27,23 +27,48 @@ const DVSAAutomation = (function () {
     }
 
     const Logger = {
-        log: function(message, level = 'INFO') {
+        /**
+         * Formats a log message with a timestamp, app prefix, and severity level.
+         * @param {string} message - The message to format.
+         * @param {string} level - The severity level (e.g., 'INFO', 'WARN', 'ERROR').
+         * @returns {string} The formatted log string.
+         */
+        formatMessage: function(message, level) {
             const timestamp = new Date().toLocaleTimeString();
-            const prefix = `[${timestamp}] [DVSA Auto] [${level}]`;
-            console.log(`${prefix} ${message}`);
+            return `[${timestamp}] [DVSA Auto] [${level}] ${message}`;
         },
+
+        /**
+         * Logs a generic message to the console.
+         * @param {string} message - The message to log.
+         * @param {string} [level='INFO'] - The severity level.
+         */
+        log: function(message, level = 'INFO') {
+            console.log(this.formatMessage(message, level));
+        },
+
+        /**
+         * Logs an informational message to the console.
+         * @param {string} message - The message to log.
+         */
         info: function(message) {
             this.log(message, 'INFO');
         },
+
+        /**
+         * Logs a warning message to the console.
+         * @param {string} message - The message to log.
+         */
         warn: function(message) {
-            const timestamp = new Date().toLocaleTimeString();
-            const prefix = `[${timestamp}] [DVSA Auto] [WARN]`;
-            console.warn(`${prefix} ${message}`);
+            console.warn(this.formatMessage(message, 'WARN'));
         },
+
+        /**
+         * Logs an error message to the console.
+         * @param {string} message - The message to log.
+         */
         error: function(message) {
-            const timestamp = new Date().toLocaleTimeString();
-            const prefix = `[${timestamp}] [DVSA Auto] [ERROR]`;
-            console.error(`${prefix} ${message}`);
+            console.error(this.formatMessage(message, 'ERROR'));
         }
     };
 
