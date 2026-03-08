@@ -1194,6 +1194,11 @@ describe('DVSA Driving Test Booking Automation', () => {
     });
 
     describe('Logger', () => {
+        test('formatMessage returns correctly formatted string', () => {
+            const result = DVSAAutomation.Logger.formatMessage('Test Message', 'DEBUG');
+            expect(result).toMatch(/\[.*\] \[DVSA Auto\] \[DEBUG\] Test Message/);
+        });
+
         test('formats info messages with timestamp and prefix', () => {
             const spyLog = jest.spyOn(console, 'log');
             DVSAAutomation.Logger.info('Test Info');
