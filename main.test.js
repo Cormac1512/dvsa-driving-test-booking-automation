@@ -155,10 +155,7 @@ describe('DVSA Driving Test Booking Automation', () => {
                 // that result in a number >= limit (e.g., exactly MAX_SAFE)
                 // MAX_SAFE = (2097151 * 4294967296) + 4294967295
                 array[0] = 0x1FFFFF; // 21 bits high
-                return array;
-            })
-            .mockImplementationOnce((array) => {
-                array[0] = 4294967295; // 32 bits low
+                array[1] = 4294967295; // 32 bits low
                 return array;
             })
             .mockImplementationOnce((array) => {
@@ -167,10 +164,7 @@ describe('DVSA Driving Test Booking Automation', () => {
                 // 2000000000 / 4294967296 = 0 (high)
                 // 2000000000 % 4294967296 = 2000000000 (low)
                 array[0] = 0; // high
-                return array;
-            })
-            .mockImplementationOnce((array) => {
-                array[0] = 2000000000; // low
+                array[1] = 2000000000; // low
                 return array;
             });
 
@@ -178,8 +172,8 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         const result = DVSAAutomation.randomIntBetween(min, max);
 
-        // Expect 4 calls (2 for the rejected value, 2 for the accepted value)
-        expect(mockGetRandomValues).toHaveBeenCalledTimes(4);
+        // Expect 2 calls (1 for the rejected value, 1 for the accepted value)
+        expect(mockGetRandomValues).toHaveBeenCalledTimes(2);
         expect(result).toBeGreaterThanOrEqual(min);
         expect(result).toBeLessThanOrEqual(max);
     });

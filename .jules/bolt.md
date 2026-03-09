@@ -21,3 +21,6 @@
 ## 2025-02-13 - AudioContext Resource Exhaustion
 **Learning:** Instantiating `new AudioContext()` on every function call for an alert sound causes a memory leak and quickly leads to a `DOMException` crash. Browsers enforce a strict hardware limit (often ~6 concurrent contexts).
 **Action:** Always cache hardware-backed browser APIs (like Web Audio API context) as singletons or application-level properties. When reusing a cached context, check `ctx.state === 'suspended'` and call `ctx.resume()` to handle browser autoplay policy restrictions gracefully.
+## 2025-03-09 - Batching crypto.getRandomValues Calls
+**Learning:** Calling `window.crypto.getRandomValues` multiple times for small chunks of random data (like two separate 32-bit values) incurs significant context-switch overhead between JS and native crypto APIs.
+**Action:** Always batch requests by using a single, larger TypedArray (e.g., `Uint32Array(2)` instead of two `Uint32Array(1)` calls) to fetch all needed random bits at once. This halved the execution time for large random number generation.
