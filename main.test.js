@@ -903,6 +903,32 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(DVSAAutomation.isValidInstructorOptional('123a')).toBe(false);
     });
 
+    describe('formatDuration', () => {
+        test('formats seconds less than 60 correctly', () => {
+            expect(DVSAAutomation.formatDuration(45)).toBe('45s');
+            expect(DVSAAutomation.formatDuration(0)).toBe('0s');
+        });
+
+        test('formats exact minutes correctly', () => {
+            expect(DVSAAutomation.formatDuration(60)).toBe('1m 0s');
+            expect(DVSAAutomation.formatDuration(120)).toBe('2m 0s');
+        });
+
+        test('formats mixed minutes and seconds correctly', () => {
+            expect(DVSAAutomation.formatDuration(90)).toBe('1m 30s');
+            expect(DVSAAutomation.formatDuration(125)).toBe('2m 5s');
+        });
+
+        test('handles negative inputs safely by returning 0s', () => {
+            expect(DVSAAutomation.formatDuration(-10)).toBe('0s');
+        });
+
+        test('handles string inputs gracefully', () => {
+            expect(DVSAAutomation.formatDuration('75')).toBe('1m 15s');
+            expect(DVSAAutomation.formatDuration('invalid')).toBe('0s');
+        });
+    });
+
     test('validateActionConfig returns true for valid non-default input', () => {
         const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
         const spyPlayAlertSound = jest.spyOn(DVSAAutomation, 'playAlertSound');

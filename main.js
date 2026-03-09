@@ -82,18 +82,38 @@ const DVSAAutomation = (function () {
     const DATE_REGEX = /^\d{2}\/\d{2}\/\d{4}$/;
 
     // Validation functions
+    /**
+     * Validates if the given string is a valid driving licence number.
+     * @param {string} licence - The driving licence number to validate.
+     * @returns {boolean} True if valid, false otherwise.
+     */
     function isValidLicence(licence) {
         return LICENCE_REGEX.test(licence);
     }
 
+    /**
+     * Validates if the given string is a valid UK postcode.
+     * @param {string} postcode - The postcode to validate.
+     * @returns {boolean} True if valid, false otherwise.
+     */
     function isValidPostcode(postcode) {
         return POSTCODE_REGEX.test(postcode);
     }
 
+    /**
+     * Validates if the given string is a valid instructor reference number.
+     * @param {string} instructor - The instructor reference number to validate.
+     * @returns {boolean} True if valid, false otherwise.
+     */
     function isValidInstructor(instructor) {
         return INSTRUCTOR_REGEX.test(instructor);
     }
 
+    /**
+     * Validates if the given string is a valid date in DD/MM/YYYY format.
+     * @param {string} dateString - The date string to validate.
+     * @returns {boolean} True if valid, false otherwise.
+     */
     function isValidDate(dateString) {
         if (!DATE_REGEX.test(dateString)) return false;
 
@@ -216,6 +236,22 @@ const DVSAAutomation = (function () {
         isValidDelay,
         parseDelay,
         isValidInstructorOptional,
+
+        /**
+         * Formats a total number of seconds into a human-readable duration string.
+         * For example: 90 -> "1m 30s", 45 -> "45s", 120 -> "2m 0s".
+         * @param {number} totalSeconds - The total duration in seconds.
+         * @returns {string} The formatted duration string.
+         */
+        formatDuration(totalSeconds) {
+            const secs = Math.max(0, parseInt(totalSeconds, 10) || 0);
+            const minutes = Math.floor(secs / 60);
+            const remainingSeconds = secs % 60;
+            if (minutes > 0) {
+                return `${minutes}m ${remainingSeconds}s`;
+            }
+            return `${remainingSeconds}s`;
+        },
 
         getElement(selector) {
             // ⚡ Bolt Optimization: Pre-processed selectors avoid string slicing and prefix checks on every call.
@@ -656,12 +692,12 @@ const DVSAAutomation = (function () {
 
                 const interval = app.randomIntBetween(app.checkResultsMinDelay, app.checkResultsMaxDelay);
                 const seconds = Math.round(interval / 1000);
-                Logger.info('Sleeping for ' + seconds + 's');
+                Logger.info(`Sleeping for ${app.formatDuration(seconds)}`);
 
                 app.countdownInterval = app.countdown(
                     seconds,
                     (remaining) => {
-                        app.showToast(`Next check in ${remaining}s...`, 2000);
+                        app.showToast(`Next check in ${app.formatDuration(remaining)}...`, 2000);
                     },
                     () => {
                         document.location.href = "https://driverpracticaltest.dvsa.gov.uk/application";
