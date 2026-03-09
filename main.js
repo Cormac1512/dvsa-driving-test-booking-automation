@@ -551,19 +551,32 @@ const DVSAAutomation = (function () {
             // Fade in
             if (toast.style.opacity !== '1') {
                 requestAnimationFrame(() => {
-                    toast.style.opacity = '1';
+                    try {
+                        toast.style.opacity = '1';
+                    } catch (error) {
+                        app.Logger.error('Failed to animate toast securely.');
+                    }
                 });
             }
 
             // Schedule removal
             app.toastTimeout = setTimeout(() => {
-                toast.style.opacity = '0';
-                app.toastTimeout = setTimeout(() => {
-                    if (toast.parentNode === document.body) {
-                        document.body.removeChild(toast);
-                    }
-                    app.toastTimeout = null;
-                }, 500);
+                try {
+                    toast.style.opacity = '0';
+                    app.toastTimeout = setTimeout(() => {
+                        try {
+                            if (toast.parentNode === document.body) {
+                                document.body.removeChild(toast);
+                            }
+                        } catch (innerError) {
+                            app.Logger.error('Failed to remove toast securely.');
+                        } finally {
+                            app.toastTimeout = null;
+                        }
+                    }, 500);
+                } catch (error) {
+                    app.Logger.error('Failed to hide toast securely.');
+                }
             }, duration);
         },
 
