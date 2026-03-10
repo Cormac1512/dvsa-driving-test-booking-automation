@@ -13,6 +13,23 @@
 const DVSAAutomation = (function () {
     'use strict';
 
+    /**
+     * USER CONFIGURATION
+     *
+     * You can hardcode your configuration values here instead of using the prompt menus.
+     * Leave values as empty strings or null to fall back to stored settings or defaults.
+     */
+    const USER_CONFIG = {
+        drivingLicenceNumber: '', // e.g. 'ABCDE12345FGHIJ6'
+        testDate: '', // e.g. '15/08/2024'
+        postcode: '', // e.g. 'PS2 4PZ'
+        instructorReferenceNumber: '', // e.g. '123456'
+        minDelay: null, // e.g. 2000
+        maxDelay: null, // e.g. 4000
+        checkResultsMinDelay: null, // e.g. 30000
+        checkResultsMaxDelay: null // e.g. 60000
+    };
+
     function getValue(key, defaultValue) {
         if (typeof GM_getValue !== 'undefined') {
             return GM_getValue(key, defaultValue);
@@ -164,8 +181,8 @@ const DVSAAutomation = (function () {
     const DEFAULT_CHECK_RESULTS_MAX_DELAY = 60000;
 
     /**
-     * Loads a setting from storage, validates it, and falls back to default if invalid.
-     * @param {string} key - The storage key.
+     * Loads a setting from USER_CONFIG or storage, validates it, and falls back to default if invalid.
+     * @param {string} key - The configuration key.
      * @param {any} defaultValue - The default value to fall back to.
      * @param {function} validateFn - The function to validate the value.
      * @param {string} warningMsg - The warning message to log if invalid.
@@ -173,6 +190,16 @@ const DVSAAutomation = (function () {
      * @returns {any} The validated and potentially parsed value.
      */
     function loadSetting(key, defaultValue, validateFn, warningMsg, parseFn = (val) => val) {
+        let userConfigValue = USER_CONFIG[key];
+
+        // If a user config value is provided (not empty string and not null), try to use it
+        if (userConfigValue !== '' && userConfigValue !== null && userConfigValue !== undefined) {
+            if (validateFn(userConfigValue)) {
+                return parseFn(userConfigValue);
+            }
+            Logger.warn(`Invalid value for ${key} in USER_CONFIG. Falling back to storage.`);
+        }
+
         let value = getValue(key, defaultValue);
         if (!validateFn(value)) {
             Logger.warn(warningMsg);
@@ -818,6 +845,155 @@ const DVSAAutomation = (function () {
             Logger.info('Page Title: ' + document.title);
         },
 
+        injectConfigUI() {
+            // Create a fixed floating settings button
+            const btn = document.createElement('button');
+            btn.id = 'dvsa-settings-btn';
+            btn.textContent = '⚙ DVSA Auto Settings';
+            btn.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 10000; padding: 10px; background-color: #0b0c0c; color: white; border: none; cursor: pointer; border-radius: 4px; font-family: Arial, sans-serif; font-size: 14px;';
+
+            // Create the modal container
+            const modal = document.createElement('div');
+            modal.id = 'dvsa-settings-modal';
+            modal.style.cssText = 'display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 10001; justify-content: center; align-items: center;';
+
+            // Create the modal content
+            const content = document.createElement('div');
+            content.style.cssText = 'background-color: white; padding: 20px; border-radius: 5px; width: 400px; max-width: 90%; font-family: Arial, sans-serif; max-height: 90vh; overflow-y: auto;';
+
+            const title = document.createElement('h2');
+            title.textContent = 'DVSA Auto Configuration';
+            title.style.cssText = 'margin-top: 0; margin-bottom: 20px; font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 10px;';
+            content.appendChild(title);
+
+            const form = document.createElement('form');
+
+            const fields = [
+                { id: 'config-licence', label: 'Driving Licence Number', key: 'drivingLicenceNumber' },
+                { id: 'config-date', label: 'Test Date (DD/MM/YYYY)', key: 'testDate' },
+                { id: 'config-postcode', label: 'Postcode', key: 'postcode' },
+                { id: 'config-instructor', label: 'Instructor Ref (Optional)', key: 'instructorReferenceNumber' },
+                { id: 'config-mindelay', label: 'Min Delay (ms)', key: 'minDelay' },
+                { id: 'config-maxdelay', label: 'Max Delay (ms)', key: 'maxDelay' },
+                { id: 'config-checkmindelay', label: 'Check Results Min Delay (ms)', key: 'checkResultsMinDelay' },
+                { id: 'config-checkmaxdelay', label: 'Check Results Max Delay (ms)', key: 'checkResultsMaxDelay' }
+            ];
+
+            const inputs = {};
+
+            fields.forEach(field => {
+                const wrapper = document.createElement('div');
+                wrapper.style.marginBottom = '15px';
+
+                const label = document.createElement('label');
+                label.htmlFor = field.id;
+                label.textContent = field.label;
+                label.style.display = 'block';
+                label.style.marginBottom = '5px';
+                label.style.fontWeight = 'bold';
+                label.style.fontSize = '14px';
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = field.id;
+                input.value = app[field.key] || '';
+                input.style.cssText = 'width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;';
+
+                inputs[field.key] = input;
+
+                wrapper.appendChild(label);
+                wrapper.appendChild(input);
+                form.appendChild(wrapper);
+            });
+
+            const buttonWrapper = document.createElement('div');
+            buttonWrapper.style.cssText = 'display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;';
+
+            const saveBtn = document.createElement('button');
+            saveBtn.textContent = 'Save';
+            saveBtn.type = 'button';
+            saveBtn.style.cssText = 'padding: 10px 20px; background-color: #00703c; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.type = 'button';
+            cancelBtn.style.cssText = 'padding: 10px 20px; background-color: #f3f2f1; color: black; border: 1px solid #8c8c8c; cursor: pointer; border-radius: 4px;';
+
+            buttonWrapper.appendChild(cancelBtn);
+            buttonWrapper.appendChild(saveBtn);
+            form.appendChild(buttonWrapper);
+
+            content.appendChild(form);
+            modal.appendChild(content);
+
+            // Event Listeners
+            btn.addEventListener('click', () => {
+                // Populate inputs with current app state
+                fields.forEach(field => {
+                    inputs[field.key].value = app[field.key] || '';
+                });
+                modal.style.display = 'flex';
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+
+            saveBtn.addEventListener('click', () => {
+                const values = {
+                    drivingLicenceNumber: inputs.drivingLicenceNumber.value.trim().toUpperCase(),
+                    testDate: inputs.testDate.value.trim(),
+                    postcode: inputs.postcode.value.trim().toUpperCase(),
+                    instructorReferenceNumber: inputs.instructorReferenceNumber.value.trim(),
+                    minDelay: inputs.minDelay.value.trim(),
+                    maxDelay: inputs.maxDelay.value.trim(),
+                    checkResultsMinDelay: inputs.checkResultsMinDelay.value.trim(),
+                    checkResultsMaxDelay: inputs.checkResultsMaxDelay.value.trim()
+                };
+
+                // Validate before saving
+                if (!app.isValidLicence(values.drivingLicenceNumber)) return alert("Invalid Licence Number");
+                if (!app.isValidDate(values.testDate)) return alert("Invalid Test Date");
+                if (!app.isValidPostcode(values.postcode)) return alert("Invalid Postcode");
+                if (!app.isValidInstructorOptional(values.instructorReferenceNumber)) return alert("Invalid Instructor Reference");
+                if (!app.isValidDelay(values.minDelay)) return alert("Invalid Min Delay");
+                if (!app.isValidDelay(values.maxDelay)) return alert("Invalid Max Delay");
+                if (!app.isValidDelay(values.checkResultsMinDelay)) return alert("Invalid Check Results Min Delay");
+                if (!app.isValidDelay(values.checkResultsMaxDelay)) return alert("Invalid Check Results Max Delay");
+
+                // Save
+                const parsedValues = {
+                    ...values,
+                    minDelay: app.parseDelay(values.minDelay),
+                    maxDelay: app.parseDelay(values.maxDelay),
+                    checkResultsMinDelay: app.parseDelay(values.checkResultsMinDelay),
+                    checkResultsMaxDelay: app.parseDelay(values.checkResultsMaxDelay)
+                };
+
+                Object.keys(parsedValues).forEach(key => {
+                    setValue(key, parsedValues[key]);
+                    app[key] = parsedValues[key];
+                });
+
+                app.showToast("Configuration saved via UI");
+                modal.style.display = 'none';
+            });
+
+            // Make sure document.body is available, otherwise wait for it
+            const attachUI = () => {
+                if (!document.getElementById('dvsa-settings-btn')) {
+                    document.body.appendChild(btn);
+                    document.body.appendChild(modal);
+                }
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', attachUI);
+            } else {
+                attachUI();
+            }
+        },
+
         init() {
             // Anti-bot evasion: override navigator.webdriver to prevent headless browser detection
             try {
@@ -827,6 +1003,8 @@ const DVSAAutomation = (function () {
             } catch (error) {
                 app.Logger.error('Failed to override navigator.webdriver');
             }
+
+            app.injectConfigUI();
 
             // Ensure the script runs after the DOM is ready
             if (document.readyState === 'loading') {
