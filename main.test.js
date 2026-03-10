@@ -56,6 +56,7 @@ global.GM_getValue = jest.fn();
 global.GM_registerMenuCommand = jest.fn();
 global.prompt = jest.fn();
 global.alert = jest.fn();
+global.confirm = jest.fn();
 global.requestAnimationFrame = jest.fn((cb) => cb());
 
 const DVSAAutomation = require('./main');
@@ -1169,6 +1170,81 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         expect(GM_setValue).toHaveBeenCalledWith('drivingLicenceNumber', 'ABCDE12345FGHIJ6');
         expect(GM_setValue).toHaveBeenCalledWith('postcode', 'SW1A 1AA');
+    });
+
+    test('resetConfiguration resets all configuration and paused state when confirmed', () => {
+        // Set up mock configuration values different from defaults
+        DVSAAutomation.drivingLicenceNumber = 'CHANGED123456789';
+        DVSAAutomation.testDate = '01/01/2025';
+        DVSAAutomation.postcode = 'M1 1AA';
+        DVSAAutomation.instructorReferenceNumber = '987654';
+        DVSAAutomation.minDelay = 9999;
+        DVSAAutomation.maxDelay = 9999;
+        DVSAAutomation.checkResultsMinDelay = 9999;
+        DVSAAutomation.checkResultsMaxDelay = 9999;
+
+        // Mock confirm to return true
+        global.confirm.mockReturnValueOnce(true);
+
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const spyLoggerInfo = jest.spyOn(DVSAAutomation.Logger, 'info');
+
+        DVSAAutomation.resetConfiguration();
+
+        // Verify confirm prompt
+        expect(global.confirm).toHaveBeenCalledWith("Are you sure you want to reset all configurations to their default values?");
+
+        // Verify GM_setValue calls
+        expect(global.GM_setValue).toHaveBeenCalledWith('drivingLicenceNumber', DVSAAutomation.DEFAULT_LICENCE);
+        expect(global.GM_setValue).toHaveBeenCalledWith('testDate', DVSAAutomation.DEFAULT_DATE);
+        expect(global.GM_setValue).toHaveBeenCalledWith('postcode', DVSAAutomation.DEFAULT_POSTCODE);
+        expect(global.GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', DVSAAutomation.DEFAULT_INSTRUCTOR);
+        expect(global.GM_setValue).toHaveBeenCalledWith('minDelay', DVSAAutomation.DEFAULT_MIN_DELAY);
+        expect(global.GM_setValue).toHaveBeenCalledWith('maxDelay', DVSAAutomation.DEFAULT_MAX_DELAY);
+        expect(global.GM_setValue).toHaveBeenCalledWith('checkResultsMinDelay', DVSAAutomation.DEFAULT_CHECK_RESULTS_MIN_DELAY);
+        expect(global.GM_setValue).toHaveBeenCalledWith('checkResultsMaxDelay', DVSAAutomation.DEFAULT_CHECK_RESULTS_MAX_DELAY);
+        expect(global.GM_setValue).toHaveBeenCalledWith('isPaused', false);
+
+        // Verify app object state updates
+        expect(DVSAAutomation.drivingLicenceNumber).toBe(DVSAAutomation.DEFAULT_LICENCE);
+        expect(DVSAAutomation.testDate).toBe(DVSAAutomation.DEFAULT_DATE);
+        expect(DVSAAutomation.postcode).toBe(DVSAAutomation.DEFAULT_POSTCODE);
+        expect(DVSAAutomation.instructorReferenceNumber).toBe(DVSAAutomation.DEFAULT_INSTRUCTOR);
+        expect(DVSAAutomation.minDelay).toBe(DVSAAutomation.DEFAULT_MIN_DELAY);
+        expect(DVSAAutomation.maxDelay).toBe(DVSAAutomation.DEFAULT_MAX_DELAY);
+        expect(DVSAAutomation.checkResultsMinDelay).toBe(DVSAAutomation.DEFAULT_CHECK_RESULTS_MIN_DELAY);
+        expect(DVSAAutomation.checkResultsMaxDelay).toBe(DVSAAutomation.DEFAULT_CHECK_RESULTS_MAX_DELAY);
+
+        // Verify logging and toast
+        expect(spyLoggerInfo).toHaveBeenCalledWith('Configuration has been reset to defaults.');
+        expect(spyShowToast).toHaveBeenCalledWith('Configuration reset to defaults.');
+    });
+
+    test('resetConfiguration does not reset configuration when cancelled', () => {
+        // Set up initial state
+        const initialLicence = 'CHANGED123456789';
+        const initialDate = '01/01/2025';
+
+        DVSAAutomation.drivingLicenceNumber = initialLicence;
+        DVSAAutomation.testDate = initialDate;
+
+        // Mock confirm to return false (cancelled)
+        global.confirm.mockReturnValueOnce(false);
+
+        const spyShowToast = jest.spyOn(DVSAAutomation, 'showToast');
+        const spyLoggerInfo = jest.spyOn(DVSAAutomation.Logger, 'info');
+
+        DVSAAutomation.resetConfiguration();
+
+        // Verify confirm prompt
+        expect(global.confirm).toHaveBeenCalledWith("Are you sure you want to reset all configurations to their default values?");
+
+        // Verify no changes were made
+        expect(global.GM_setValue).not.toHaveBeenCalled();
+        expect(DVSAAutomation.drivingLicenceNumber).toBe(initialLicence);
+        expect(DVSAAutomation.testDate).toBe(initialDate);
+        expect(spyLoggerInfo).not.toHaveBeenCalled();
+        expect(spyShowToast).not.toHaveBeenCalled();
     });
 
     test('init calls handlePage on DOMContentLoaded when loading (optimization)', () => {

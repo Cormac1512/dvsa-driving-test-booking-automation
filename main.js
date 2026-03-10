@@ -158,6 +158,10 @@ const DVSAAutomation = (function () {
     const DEFAULT_DATE = '15/08/2024';
     const DEFAULT_POSTCODE = 'PS2 4PZ';
     const DEFAULT_INSTRUCTOR = '';
+    const DEFAULT_MIN_DELAY = 2000;
+    const DEFAULT_MAX_DELAY = 4000;
+    const DEFAULT_CHECK_RESULTS_MIN_DELAY = 30000;
+    const DEFAULT_CHECK_RESULTS_MAX_DELAY = 60000;
 
     /**
      * Loads a setting from storage, validates it, and falls back to default if invalid.
@@ -184,10 +188,10 @@ const DVSAAutomation = (function () {
     let instructorReferenceNumber = loadSetting('instructorReferenceNumber', DEFAULT_INSTRUCTOR, isValidInstructorOptional, 'Invalid instructor reference number in storage. Using default.');
 
     const nearestNumOfCentres = 12; // Number of test centres to find
-    let minDelay = loadSetting('minDelay', 2000, isValidDelay, 'Invalid minDelay in storage (must be >= 1000). Using default.', parseDelay);
-    let maxDelay = loadSetting('maxDelay', 4000, isValidDelay, 'Invalid maxDelay in storage (must be >= 1000). Using default.', parseDelay);
-    let checkResultsMinDelay = loadSetting('checkResultsMinDelay', 30000, isValidDelay, 'Invalid checkResultsMinDelay in storage (must be >= 1000). Using default.', parseDelay);
-    let checkResultsMaxDelay = loadSetting('checkResultsMaxDelay', 60000, isValidDelay, 'Invalid checkResultsMaxDelay in storage (must be >= 1000). Using default.', parseDelay);
+    let minDelay = loadSetting('minDelay', DEFAULT_MIN_DELAY, isValidDelay, 'Invalid minDelay in storage (must be >= 1000). Using default.', parseDelay);
+    let maxDelay = loadSetting('maxDelay', DEFAULT_MAX_DELAY, isValidDelay, 'Invalid maxDelay in storage (must be >= 1000). Using default.', parseDelay);
+    let checkResultsMinDelay = loadSetting('checkResultsMinDelay', DEFAULT_CHECK_RESULTS_MIN_DELAY, isValidDelay, 'Invalid checkResultsMinDelay in storage (must be >= 1000). Using default.', parseDelay);
+    let checkResultsMaxDelay = loadSetting('checkResultsMaxDelay', DEFAULT_CHECK_RESULTS_MAX_DELAY, isValidDelay, 'Invalid checkResultsMaxDelay in storage (must be >= 1000). Using default.', parseDelay);
 
     const randomBuffer = (typeof window !== 'undefined' && window.crypto) ? new Uint32Array(2) : null;
 
@@ -211,6 +215,10 @@ const DVSAAutomation = (function () {
         DEFAULT_DATE,
         DEFAULT_POSTCODE,
         DEFAULT_INSTRUCTOR,
+        DEFAULT_MIN_DELAY,
+        DEFAULT_MAX_DELAY,
+        DEFAULT_CHECK_RESULTS_MIN_DELAY,
+        DEFAULT_CHECK_RESULTS_MAX_DELAY,
 
         Logger,
 
@@ -468,6 +476,42 @@ const DVSAAutomation = (function () {
             );
 
             app.showToast("Configuration saved. Please reload the page.");
+        },
+
+        /**
+         * Resets all configuration settings to their default values.
+         */
+        resetConfiguration() {
+            if (confirm("Are you sure you want to reset all configurations to their default values?")) {
+                setValue('drivingLicenceNumber', app.DEFAULT_LICENCE);
+                app.drivingLicenceNumber = app.DEFAULT_LICENCE;
+
+                setValue('testDate', app.DEFAULT_DATE);
+                app.testDate = app.DEFAULT_DATE;
+
+                setValue('postcode', app.DEFAULT_POSTCODE);
+                app.postcode = app.DEFAULT_POSTCODE;
+
+                setValue('instructorReferenceNumber', app.DEFAULT_INSTRUCTOR);
+                app.instructorReferenceNumber = app.DEFAULT_INSTRUCTOR;
+
+                setValue('minDelay', app.DEFAULT_MIN_DELAY);
+                app.minDelay = app.DEFAULT_MIN_DELAY;
+
+                setValue('maxDelay', app.DEFAULT_MAX_DELAY);
+                app.maxDelay = app.DEFAULT_MAX_DELAY;
+
+                setValue('checkResultsMinDelay', app.DEFAULT_CHECK_RESULTS_MIN_DELAY);
+                app.checkResultsMinDelay = app.DEFAULT_CHECK_RESULTS_MIN_DELAY;
+
+                setValue('checkResultsMaxDelay', app.DEFAULT_CHECK_RESULTS_MAX_DELAY);
+                app.checkResultsMaxDelay = app.DEFAULT_CHECK_RESULTS_MAX_DELAY;
+
+                setValue('isPaused', false);
+
+                app.Logger.info('Configuration has been reset to defaults.');
+                app.showToast("Configuration reset to defaults.");
+            }
         },
 
         /**
@@ -796,6 +840,7 @@ const DVSAAutomation = (function () {
     if (typeof GM_registerMenuCommand !== 'undefined') {
         GM_registerMenuCommand("Configure Script", app.configure);
         GM_registerMenuCommand("Toggle Automation", app.togglePause);
+        GM_registerMenuCommand("Reset Configuration", app.resetConfiguration);
     }
 
     if (typeof module === 'undefined') {
