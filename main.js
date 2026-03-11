@@ -171,12 +171,13 @@ const DVSAAutomation = (function () {
     }
 
     /**
-     * Validates if the delay is a valid number and greater than or equal to 1000.
+     * Validates if the delay is a valid number, >= 1000, and <= 2147483647 (to prevent 32-bit overflow DoS).
      * @param {string|number} delay - The delay value to check.
      * @returns {boolean} True if valid, false otherwise.
      */
     function isValidDelay(delay) {
-        return !isNaN(delay) && parseInt(delay, 10) >= 1000;
+        const parsed = parseInt(delay, 10);
+        return !isNaN(delay) && parsed >= 1000 && parsed <= 2147483647;
     }
 
     /**
@@ -243,10 +244,10 @@ const DVSAAutomation = (function () {
     let instructorReferenceNumber = loadSetting('instructorReferenceNumber', DEFAULT_INSTRUCTOR, isValidInstructorOptional, 'Invalid instructor reference number in storage. Using default.');
 
     const nearestNumOfCentres = 12; // Number of test centres to find
-    let minDelay = loadSetting('minDelay', DEFAULT_MIN_DELAY, isValidDelay, 'Invalid minDelay in storage (must be >= 1000). Using default.', parseDelay);
-    let maxDelay = loadSetting('maxDelay', DEFAULT_MAX_DELAY, isValidDelay, 'Invalid maxDelay in storage (must be >= 1000). Using default.', parseDelay);
-    let checkResultsMinDelay = loadSetting('checkResultsMinDelay', DEFAULT_CHECK_RESULTS_MIN_DELAY, isValidDelay, 'Invalid checkResultsMinDelay in storage (must be >= 1000). Using default.', parseDelay);
-    let checkResultsMaxDelay = loadSetting('checkResultsMaxDelay', DEFAULT_CHECK_RESULTS_MAX_DELAY, isValidDelay, 'Invalid checkResultsMaxDelay in storage (must be >= 1000). Using default.', parseDelay);
+    let minDelay = loadSetting('minDelay', DEFAULT_MIN_DELAY, isValidDelay, 'Invalid minDelay in storage (must be between 1000 and 2147483647). Using default.', parseDelay);
+    let maxDelay = loadSetting('maxDelay', DEFAULT_MAX_DELAY, isValidDelay, 'Invalid maxDelay in storage (must be between 1000 and 2147483647). Using default.', parseDelay);
+    let checkResultsMinDelay = loadSetting('checkResultsMinDelay', DEFAULT_CHECK_RESULTS_MIN_DELAY, isValidDelay, 'Invalid checkResultsMinDelay in storage (must be between 1000 and 2147483647). Using default.', parseDelay);
+    let checkResultsMaxDelay = loadSetting('checkResultsMaxDelay', DEFAULT_CHECK_RESULTS_MAX_DELAY, isValidDelay, 'Invalid checkResultsMaxDelay in storage (must be between 1000 and 2147483647). Using default.', parseDelay);
 
     const randomBuffer = (typeof window !== 'undefined' && window.crypto) ? new Uint32Array(2) : null;
 
@@ -506,7 +507,7 @@ const DVSAAutomation = (function () {
                 'minDelay',
                 "Enter Minimum Delay (ms):",
                 app.isValidDelay,
-                "Invalid Delay! It should be at least 1000ms.",
+                "Invalid Delay! It should be between 1000 and 2147483647 ms.",
                 app.parseDelay
             );
 
@@ -514,7 +515,7 @@ const DVSAAutomation = (function () {
                 'maxDelay',
                 "Enter Maximum Delay (ms):",
                 app.isValidDelay,
-                "Invalid Delay! It should be at least 1000ms.",
+                "Invalid Delay! It should be between 1000 and 2147483647 ms.",
                 app.parseDelay
             );
 
@@ -522,7 +523,7 @@ const DVSAAutomation = (function () {
                 'checkResultsMinDelay',
                 "Enter Minimum Check Results Delay (ms):",
                 app.isValidDelay,
-                "Invalid Delay! It should be at least 1000ms.",
+                "Invalid Delay! It should be between 1000 and 2147483647 ms.",
                 app.parseDelay
             );
 
@@ -530,7 +531,7 @@ const DVSAAutomation = (function () {
                 'checkResultsMaxDelay',
                 "Enter Maximum Check Results Delay (ms):",
                 app.isValidDelay,
-                "Invalid Delay! It should be at least 1000ms.",
+                "Invalid Delay! It should be between 1000 and 2147483647 ms.",
                 app.parseDelay
             );
 
