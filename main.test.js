@@ -77,6 +77,7 @@ describe('DVSA Driving Test Booking Automation', () => {
         DVSAAutomation.actionTimeout = null;
         DVSAAutomation.countdownInterval = null;
         DVSAAutomation.audioContext = null;
+        DVSAAutomation._resetConfigCache();
     });
 
     afterEach(() => {
@@ -982,7 +983,7 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         expect(prompt).toHaveBeenCalledWith(promptMsg, 'initial');
         expect(validator).toHaveBeenCalledWith(validVal);
-        expect(GM_setValue).toHaveBeenCalledWith(key, validVal);
+        expect(GM_setValue).toHaveBeenCalledWith('dvsa_config', JSON.stringify({ [key]: validVal }));
         expect(DVSAAutomation[key]).toBe(validVal);
         expect(result).toBe(true);
     });
@@ -1013,7 +1014,7 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         DVSAAutomation.updateSetting(key, 'msg', validator, 'err', parser);
 
-        expect(GM_setValue).toHaveBeenCalledWith(key, 20);
+        expect(GM_setValue).toHaveBeenCalledWith('dvsa_config', JSON.stringify({ [key]: 20 }));
         expect(DVSAAutomation[key]).toBe(20);
     });
 
@@ -1034,14 +1035,16 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         DVSAAutomation.configure();
 
-        expect(GM_setValue).toHaveBeenCalledWith('drivingLicenceNumber', 'ABCDE12345FGHIJ6');
-        expect(GM_setValue).toHaveBeenCalledWith('testDate', '15/08/2024');
-        expect(GM_setValue).toHaveBeenCalledWith('postcode', 'PS2 4PZ');
-        expect(GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', '123456');
-        expect(GM_setValue).toHaveBeenCalledWith('minDelay', 2000);
-        expect(GM_setValue).toHaveBeenCalledWith('maxDelay', 4000);
-        expect(GM_setValue).toHaveBeenCalledWith('checkResultsMinDelay', 30000);
-        expect(GM_setValue).toHaveBeenCalledWith('checkResultsMaxDelay', 60000);
+        expect(GM_setValue).toHaveBeenCalledWith('dvsa_config', JSON.stringify({
+            drivingLicenceNumber: 'ABCDE12345FGHIJ6',
+            testDate: '15/08/2024',
+            postcode: 'PS2 4PZ',
+            instructorReferenceNumber: '123456',
+            minDelay: 2000,
+            maxDelay: 4000,
+            checkResultsMinDelay: 30000,
+            checkResultsMaxDelay: 60000
+        }));
 
         // Expect showToast to be called instead of alert
         expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Configuration saved'));
@@ -1109,11 +1112,16 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         DVSAAutomation.configure();
 
-        expect(GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', '');
-        expect(GM_setValue).toHaveBeenCalledWith('minDelay', 2000);
-        expect(GM_setValue).toHaveBeenCalledWith('maxDelay', 4000);
-        expect(GM_setValue).toHaveBeenCalledWith('checkResultsMinDelay', 30000);
-        expect(GM_setValue).toHaveBeenCalledWith('checkResultsMaxDelay', 60000);
+        expect(GM_setValue).toHaveBeenCalledWith('dvsa_config', JSON.stringify({
+            drivingLicenceNumber: 'ABCDE12345FGHIJ6',
+            testDate: '15/08/2024',
+            postcode: 'PS2 4PZ',
+            instructorReferenceNumber: '',
+            minDelay: 2000,
+            maxDelay: 4000,
+            checkResultsMinDelay: 30000,
+            checkResultsMaxDelay: 60000
+        }));
     });
 
     test('configure handles cancelled prompts', () => {
@@ -1143,14 +1151,16 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         DVSAAutomation.configure();
 
-        expect(GM_setValue).toHaveBeenCalledWith('drivingLicenceNumber', 'ABCDE12345FGHIJ6');
-        expect(GM_setValue).toHaveBeenCalledWith('testDate', '15/08/2024');
-        expect(GM_setValue).toHaveBeenCalledWith('postcode', 'PS2 4PZ');
-        expect(GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', '123456');
-        expect(GM_setValue).toHaveBeenCalledWith('minDelay', 2000);
-        expect(GM_setValue).toHaveBeenCalledWith('maxDelay', 4000);
-        expect(GM_setValue).toHaveBeenCalledWith('checkResultsMinDelay', 30000);
-        expect(GM_setValue).toHaveBeenCalledWith('checkResultsMaxDelay', 60000);
+        expect(GM_setValue).toHaveBeenCalledWith('dvsa_config', JSON.stringify({
+            drivingLicenceNumber: 'ABCDE12345FGHIJ6',
+            testDate: '15/08/2024',
+            postcode: 'PS2 4PZ',
+            instructorReferenceNumber: '123456',
+            minDelay: 2000,
+            maxDelay: 4000,
+            checkResultsMinDelay: 30000,
+            checkResultsMaxDelay: 60000
+        }));
 
         expect(spyShowToast).toHaveBeenCalledWith(expect.stringContaining('Configuration saved'));
     });
@@ -1170,8 +1180,8 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         DVSAAutomation.configure();
 
-        expect(GM_setValue).toHaveBeenCalledWith('drivingLicenceNumber', 'ABCDE12345FGHIJ6');
-        expect(GM_setValue).toHaveBeenCalledWith('postcode', 'SW1A 1AA');
+        expect(GM_setValue).toHaveBeenCalledWith('dvsa_config', expect.stringContaining('"drivingLicenceNumber":"ABCDE12345FGHIJ6"'));
+        expect(GM_setValue).toHaveBeenCalledWith('dvsa_config', expect.stringContaining('"postcode":"SW1A 1AA"'));
     });
 
     test('resetConfiguration resets all configuration and paused state when confirmed', () => {
@@ -1197,14 +1207,16 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(global.confirm).toHaveBeenCalledWith("Are you sure you want to reset all configurations to their default values?");
 
         // Verify GM_setValue calls
-        expect(global.GM_setValue).toHaveBeenCalledWith('drivingLicenceNumber', DVSAAutomation.DEFAULT_LICENCE);
-        expect(global.GM_setValue).toHaveBeenCalledWith('testDate', DVSAAutomation.DEFAULT_DATE);
-        expect(global.GM_setValue).toHaveBeenCalledWith('postcode', DVSAAutomation.DEFAULT_POSTCODE);
-        expect(global.GM_setValue).toHaveBeenCalledWith('instructorReferenceNumber', DVSAAutomation.DEFAULT_INSTRUCTOR);
-        expect(global.GM_setValue).toHaveBeenCalledWith('minDelay', DVSAAutomation.DEFAULT_MIN_DELAY);
-        expect(global.GM_setValue).toHaveBeenCalledWith('maxDelay', DVSAAutomation.DEFAULT_MAX_DELAY);
-        expect(global.GM_setValue).toHaveBeenCalledWith('checkResultsMinDelay', DVSAAutomation.DEFAULT_CHECK_RESULTS_MIN_DELAY);
-        expect(global.GM_setValue).toHaveBeenCalledWith('checkResultsMaxDelay', DVSAAutomation.DEFAULT_CHECK_RESULTS_MAX_DELAY);
+        expect(global.GM_setValue).toHaveBeenCalledWith('dvsa_config', JSON.stringify({
+            drivingLicenceNumber: DVSAAutomation.DEFAULT_LICENCE,
+            testDate: DVSAAutomation.DEFAULT_DATE,
+            postcode: DVSAAutomation.DEFAULT_POSTCODE,
+            instructorReferenceNumber: DVSAAutomation.DEFAULT_INSTRUCTOR,
+            minDelay: DVSAAutomation.DEFAULT_MIN_DELAY,
+            maxDelay: DVSAAutomation.DEFAULT_MAX_DELAY,
+            checkResultsMinDelay: DVSAAutomation.DEFAULT_CHECK_RESULTS_MIN_DELAY,
+            checkResultsMaxDelay: DVSAAutomation.DEFAULT_CHECK_RESULTS_MAX_DELAY
+        }));
         expect(global.GM_setValue).toHaveBeenCalledWith('isPaused', false);
 
         // Verify app object state updates
@@ -1455,14 +1467,16 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         test('loads valid configuration from storage', () => {
             global.GM_getValue.mockImplementation((key) => {
-                if (key === 'drivingLicenceNumber') return 'ABCDE12345FGHIJ6';
-                if (key === 'testDate') return '01/01/2025';
-                if (key === 'postcode') return 'SW1A 1AA';
-                if (key === 'instructorReferenceNumber') return '123456';
-                if (key === 'minDelay') return 3000;
-                if (key === 'maxDelay') return 5000;
-                if (key === 'checkResultsMinDelay') return 20000;
-                if (key === 'checkResultsMaxDelay') return 40000;
+                if (key === 'dvsa_config') return JSON.stringify({
+                    drivingLicenceNumber: 'ABCDE12345FGHIJ6',
+                    testDate: '01/01/2025',
+                    postcode: 'SW1A 1AA',
+                    instructorReferenceNumber: '123456',
+                    minDelay: 3000,
+                    maxDelay: 5000,
+                    checkResultsMinDelay: 20000,
+                    checkResultsMaxDelay: 40000
+                });
                 return null;
             });
 
@@ -1479,14 +1493,16 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         test('falls back to defaults for invalid configuration', () => {
             global.GM_getValue.mockImplementation((key) => {
-                if (key === 'drivingLicenceNumber') return 'INVALID';
-                if (key === 'testDate') return 'INVALID';
-                if (key === 'postcode') return 'INVALID';
-                if (key === 'instructorReferenceNumber') return 'INVALID';
-                if (key === 'minDelay') return 'INVALID';
-                if (key === 'maxDelay') return 'INVALID';
-                if (key === 'checkResultsMinDelay') return 'INVALID';
-                if (key === 'checkResultsMaxDelay') return 'INVALID';
+                if (key === 'dvsa_config') return JSON.stringify({
+                    drivingLicenceNumber: 'INVALID',
+                    testDate: 'INVALID',
+                    postcode: 'INVALID',
+                    instructorReferenceNumber: 'INVALID',
+                    minDelay: 'INVALID',
+                    maxDelay: 'INVALID',
+                    checkResultsMinDelay: 'INVALID',
+                    checkResultsMaxDelay: 'INVALID'
+                });
                 return null;
             });
 
@@ -1507,10 +1523,12 @@ describe('DVSA Driving Test Booking Automation', () => {
 
         test('falls back to defaults for unsafe delays', () => {
             global.GM_getValue.mockImplementation((key) => {
-                if (key === 'minDelay') return 500;
-                if (key === 'maxDelay') return 500;
-                if (key === 'checkResultsMinDelay') return 500;
-                if (key === 'checkResultsMaxDelay') return 500;
+                if (key === 'dvsa_config') return JSON.stringify({
+                    minDelay: 500,
+                    maxDelay: 500,
+                    checkResultsMinDelay: 500,
+                    checkResultsMaxDelay: 500
+                });
                 return null;
             });
 

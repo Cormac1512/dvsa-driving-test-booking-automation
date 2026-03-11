@@ -43,6 +43,27 @@ const DVSAAutomation = (function () {
         }
     }
 
+    let cachedConfig = null;
+
+    function getBatchedConfig() {
+        if (cachedConfig) return cachedConfig;
+        const stored = getValue('dvsa_config', null);
+        if (stored) {
+            try {
+                cachedConfig = JSON.parse(stored);
+                return cachedConfig;
+            } catch (e) {
+                console.error('[DVSA Auto] Failed to parse batched config', e);
+            }
+        }
+        return {};
+    }
+
+    function saveBatchedConfig(configObj) {
+        cachedConfig = { ...getBatchedConfig(), ...configObj };
+        setValue('dvsa_config', JSON.stringify(cachedConfig));
+    }
+
     const Logger = {
         /**
          * Formats a log message with a timestamp, app prefix, and severity level.
@@ -205,7 +226,9 @@ const DVSAAutomation = (function () {
             Logger.warn(`Invalid value for ${key} in USER_CONFIG. Falling back to storage.`);
         }
 
-        let value = getValue(key, defaultValue);
+        const batchedConfig = getBatchedConfig();
+        let value = batchedConfig[key] !== undefined ? batchedConfig[key] : getValue(key, defaultValue);
+
         if (!validateFn(value)) {
             Logger.warn(warningMsg);
             return defaultValue;
@@ -251,6 +274,10 @@ const DVSAAutomation = (function () {
         DEFAULT_MAX_DELAY,
         DEFAULT_CHECK_RESULTS_MIN_DELAY,
         DEFAULT_CHECK_RESULTS_MAX_DELAY,
+
+        _resetConfigCache() {
+            cachedConfig = null;
+        },
 
         Logger,
 
@@ -334,7 +361,7 @@ const DVSAAutomation = (function () {
                 newValue = newValue.trim();
                 if (validationFn(newValue)) {
                     const parsedValue = parser(newValue);
-                    setValue(key, parsedValue);
+                    saveBatchedConfig({ [key]: parsedValue });
                     app[key] = parsedValue;
                     return true;
                 }
@@ -515,29 +542,22 @@ const DVSAAutomation = (function () {
          */
         resetConfiguration() {
             if (confirm("Are you sure you want to reset all configurations to their default values?")) {
-                setValue('drivingLicenceNumber', app.DEFAULT_LICENCE);
-                app.drivingLicenceNumber = app.DEFAULT_LICENCE;
+                const defaults = {
+                    drivingLicenceNumber: app.DEFAULT_LICENCE,
+                    testDate: app.DEFAULT_DATE,
+                    postcode: app.DEFAULT_POSTCODE,
+                    instructorReferenceNumber: app.DEFAULT_INSTRUCTOR,
+                    minDelay: app.DEFAULT_MIN_DELAY,
+                    maxDelay: app.DEFAULT_MAX_DELAY,
+                    checkResultsMinDelay: app.DEFAULT_CHECK_RESULTS_MIN_DELAY,
+                    checkResultsMaxDelay: app.DEFAULT_CHECK_RESULTS_MAX_DELAY
+                };
 
-                setValue('testDate', app.DEFAULT_DATE);
-                app.testDate = app.DEFAULT_DATE;
+                saveBatchedConfig(defaults);
 
-                setValue('postcode', app.DEFAULT_POSTCODE);
-                app.postcode = app.DEFAULT_POSTCODE;
-
-                setValue('instructorReferenceNumber', app.DEFAULT_INSTRUCTOR);
-                app.instructorReferenceNumber = app.DEFAULT_INSTRUCTOR;
-
-                setValue('minDelay', app.DEFAULT_MIN_DELAY);
-                app.minDelay = app.DEFAULT_MIN_DELAY;
-
-                setValue('maxDelay', app.DEFAULT_MAX_DELAY);
-                app.maxDelay = app.DEFAULT_MAX_DELAY;
-
-                setValue('checkResultsMinDelay', app.DEFAULT_CHECK_RESULTS_MIN_DELAY);
-                app.checkResultsMinDelay = app.DEFAULT_CHECK_RESULTS_MIN_DELAY;
-
-                setValue('checkResultsMaxDelay', app.DEFAULT_CHECK_RESULTS_MAX_DELAY);
-                app.checkResultsMaxDelay = app.DEFAULT_CHECK_RESULTS_MAX_DELAY;
+                Object.keys(defaults).forEach(key => {
+                    app[key] = defaults[key];
+                });
 
                 setValue('isPaused', false);
 
@@ -975,8 +995,9 @@ const DVSAAutomation = (function () {
                     checkResultsMaxDelay: app.parseDelay(values.checkResultsMaxDelay)
                 };
 
+                saveBatchedConfig(parsedValues);
+
                 Object.keys(parsedValues).forEach(key => {
-                    setValue(key, parsedValues[key]);
                     app[key] = parsedValues[key];
                 });
 
