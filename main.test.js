@@ -884,6 +884,8 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(DVSAAutomation.isValidDelay(2000)).toBe(true);
         expect(DVSAAutomation.isValidDelay('2000')).toBe(true);
         expect(DVSAAutomation.isValidDelay(1000)).toBe(true);
+        expect(DVSAAutomation.isValidDelay(2147483647)).toBe(true);
+        expect(DVSAAutomation.isValidDelay(2147483648)).toBe(false); // Over maximum safe integer for timeouts
         expect(DVSAAutomation.isValidDelay(999)).toBe(false);
         expect(DVSAAutomation.isValidDelay('abc')).toBe(false);
     });
@@ -1083,16 +1085,16 @@ describe('DVSA Driving Test Booking Automation', () => {
         expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Instructor Reference Number'));
 
         expect(GM_setValue).not.toHaveBeenCalledWith('minDelay', expect.anything());
-        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay! It should be at least 1000ms.'));
+        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay! It should be between 1000 and 2147483647 ms.'));
 
         expect(GM_setValue).not.toHaveBeenCalledWith('maxDelay', expect.anything());
-        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay! It should be at least 1000ms.'));
+        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay! It should be between 1000 and 2147483647 ms.'));
 
         expect(GM_setValue).not.toHaveBeenCalledWith('checkResultsMinDelay', expect.anything());
-        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay! It should be at least 1000ms.'));
+        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay! It should be between 1000 and 2147483647 ms.'));
 
         expect(GM_setValue).not.toHaveBeenCalledWith('checkResultsMaxDelay', expect.anything());
-        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay! It should be at least 1000ms.'));
+        expect(alert).toHaveBeenCalledWith(expect.stringContaining('Invalid Delay! It should be between 1000 and 2147483647 ms.'));
     });
 
     test('configure saves valid inputs with empty instructor', () => {
