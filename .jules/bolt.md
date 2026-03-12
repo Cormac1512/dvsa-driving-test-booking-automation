@@ -28,3 +28,7 @@
 ## 2024-05-18 - Optimize Logger Timestamp Formatting
 **Learning:** `Date.prototype.toLocaleTimeString()` is surprisingly slow due to locale resolution overhead. In functions that are called frequently, like a central `Logger.formatMessage` used for every log entry, this overhead adds up quickly.
 **Action:** Replace `toLocaleTimeString()` with manual concatenation of date components (e.g., `getHours().toString().padStart(2, '0')`) for significant performance gains (~4-5x faster) in high-throughput paths where default 24-hour HH:MM:SS format is acceptable.
+
+## 2025-03-12 - Fast Fixed-Format String Parsing
+**Learning:** For strings with a strictly validated, fixed format (like `DD/MM/YYYY` validated by RegExp), using `parseInt` along with `substring` incurs overhead from string allocations and function calls.
+**Action:** Replace `substring` and `parseInt` with manual character arithmetic using `charCodeAt` (e.g., `(str.charCodeAt(0) - 48) * 10`). This eliminates allocations and dramatically speeds up parsing (~7x faster). Only apply this when the string format guarantees character positions are numbers.
