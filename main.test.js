@@ -84,6 +84,40 @@ describe('DVSA Driving Test Booking Automation', () => {
         jest.useRealTimers();
     });
 
+    describe('createElement', () => {
+        test('creates an element with the correct tag', () => {
+            const el = DVSAAutomation.createElement('div');
+            expect(document.createElement).toHaveBeenCalledWith('div');
+            // Since we mocked document.createElement to return an object
+            expect(el).toBeDefined();
+        });
+
+        test('assigns normal properties like id and textContent', () => {
+            const el = DVSAAutomation.createElement('span', { id: 'test-id', textContent: 'Hello' });
+            expect(el.id).toBe('test-id');
+            expect(el.textContent).toBe('Hello');
+        });
+
+        test('handles style as a cssText string', () => {
+            const el = DVSAAutomation.createElement('div', { style: 'color: red;' });
+            expect(el.style.cssText).toBe('color: red;');
+        });
+
+        test('handles style as an object', () => {
+            const el = DVSAAutomation.createElement('div', { style: { color: 'red', display: 'none' } });
+            expect(el.style.color).toBe('red');
+            expect(el.style.display).toBe('none');
+        });
+
+        test('handles dataset as an object', () => {
+            // Our mock document.createElement doesn't have dataset, so let's mock it for this test implicitly
+            // by relying on createElement creating properties
+            document.createElement.mockReturnValueOnce({ dataset: {} });
+            const el = DVSAAutomation.createElement('div', { dataset: { testId: '123' } });
+            expect(el.dataset.testId).toBe('123');
+        });
+    });
+
     test('randomIntBetween returns a number within range', () => {
         for (let i = 0; i < 100; i++) {
             const min = 10;

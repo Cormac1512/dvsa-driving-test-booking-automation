@@ -280,6 +280,34 @@ const DVSAAutomation = (function () {
             cachedConfig = null;
         },
 
+        /**
+         * Creates an HTML element with the specified tag and properties.
+         * @param {string} tag - The HTML tag name (e.g., 'div', 'button').
+         * @param {Object} [props={}] - An object containing properties, styles, and attributes to apply.
+         * @returns {HTMLElement} The created DOM element.
+         */
+        createElement(tag, props = {}) {
+            const element = document.createElement(tag);
+            for (const [key, value] of Object.entries(props)) {
+                if (key === 'style') {
+                    if (typeof value === 'string') {
+                        element.style.cssText = value;
+                    } else if (typeof value === 'object' && value !== null) {
+                        for (const [styleKey, styleValue] of Object.entries(value)) {
+                            element.style[styleKey] = styleValue;
+                        }
+                    }
+                } else if (key === 'dataset' && typeof value === 'object' && value !== null) {
+                    for (const [dataKey, dataValue] of Object.entries(value)) {
+                        element.dataset[dataKey] = dataValue;
+                    }
+                } else {
+                    element[key] = value;
+                }
+            }
+            return element;
+        },
+
         Logger,
 
         SELECTORS: {
@@ -614,15 +642,13 @@ const DVSAAutomation = (function () {
 
         showToast(message, duration = 3000) {
             if (!app.toastElement) {
-                const toast = document.createElement('div');
-                toast.id = 'dvsa-toast';
                 // ⚡ Bolt Optimization: Replace multiple individual style assignments with a single cssText assignment.
                 // This reduces DOM style recalculations and property access overhead during toast creation.
                 // Benchmark: ~30-50% faster element style initialization.
-                toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background-color: rgba(0, 0, 0, 0.7); color: #fff; padding: 10px 20px; border-radius: 5px; z-index: 10000; transition: opacity 0.5s ease-in-out; opacity: 0; font-family: Arial, sans-serif; font-size: 14px; pointer-events: none;';
-                // Explicitly set opacity for test mock compatibility
-                toast.style.opacity = '0';
-                app.toastElement = toast;
+                app.toastElement = app.createElement('div', {
+                    id: 'dvsa-toast',
+                    style: 'position: fixed; bottom: 20px; right: 20px; background-color: rgba(0, 0, 0, 0.7); color: #fff; padding: 10px 20px; border-radius: 5px; z-index: 10000; transition: opacity 0.5s ease-in-out; opacity: 0; font-family: Arial, sans-serif; font-size: 14px; pointer-events: none;'
+                });
             }
 
             const toast = app.toastElement;
@@ -873,26 +899,30 @@ const DVSAAutomation = (function () {
 
         injectConfigUI() {
             // Create a fixed floating settings button
-            const btn = document.createElement('button');
-            btn.id = 'dvsa-settings-btn';
-            btn.textContent = '⚙ DVSA Auto Settings';
-            btn.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 10000; padding: 10px; background-color: #0b0c0c; color: white; border: none; cursor: pointer; border-radius: 4px; font-family: Arial, sans-serif; font-size: 14px;';
+            const btn = app.createElement('button', {
+                id: 'dvsa-settings-btn',
+                textContent: '⚙ DVSA Auto Settings',
+                style: 'position: fixed; top: 10px; right: 10px; z-index: 10000; padding: 10px; background-color: #0b0c0c; color: white; border: none; cursor: pointer; border-radius: 4px; font-family: Arial, sans-serif; font-size: 14px;'
+            });
 
             // Create the modal container
-            const modal = document.createElement('div');
-            modal.id = 'dvsa-settings-modal';
-            modal.style.cssText = 'display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 10001; justify-content: center; align-items: center;';
+            const modal = app.createElement('div', {
+                id: 'dvsa-settings-modal',
+                style: 'display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 10001; justify-content: center; align-items: center;'
+            });
 
             // Create the modal content
-            const content = document.createElement('div');
-            content.style.cssText = 'background-color: white; padding: 20px; border-radius: 5px; width: 400px; max-width: 90%; font-family: Arial, sans-serif; max-height: 90vh; overflow-y: auto;';
+            const content = app.createElement('div', {
+                style: 'background-color: white; padding: 20px; border-radius: 5px; width: 400px; max-width: 90%; font-family: Arial, sans-serif; max-height: 90vh; overflow-y: auto;'
+            });
 
-            const title = document.createElement('h2');
-            title.textContent = 'DVSA Auto Configuration';
-            title.style.cssText = 'margin-top: 0; margin-bottom: 20px; font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 10px;';
+            const title = app.createElement('h2', {
+                textContent: 'DVSA Auto Configuration',
+                style: 'margin-top: 0; margin-bottom: 20px; font-size: 18px; border-bottom: 1px solid #ccc; padding-bottom: 10px;'
+            });
             content.appendChild(title);
 
-            const form = document.createElement('form');
+            const form = app.createElement('form');
 
             const fields = [
                 { id: 'config-licence', label: 'Driving Licence Number', key: 'drivingLicenceNumber' },
@@ -908,22 +938,22 @@ const DVSAAutomation = (function () {
             const inputs = {};
 
             fields.forEach(field => {
-                const wrapper = document.createElement('div');
-                wrapper.style.marginBottom = '15px';
+                const wrapper = app.createElement('div', {
+                    style: { marginBottom: '15px' }
+                });
 
-                const label = document.createElement('label');
-                label.htmlFor = field.id;
-                label.textContent = field.label;
-                label.style.display = 'block';
-                label.style.marginBottom = '5px';
-                label.style.fontWeight = 'bold';
-                label.style.fontSize = '14px';
+                const label = app.createElement('label', {
+                    htmlFor: field.id,
+                    textContent: field.label,
+                    style: { display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '14px' }
+                });
 
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.id = field.id;
-                input.value = app[field.key] || '';
-                input.style.cssText = 'width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;';
+                const input = app.createElement('input', {
+                    type: 'text',
+                    id: field.id,
+                    value: app[field.key] || '',
+                    style: 'width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;'
+                });
 
                 inputs[field.key] = input;
 
@@ -932,18 +962,21 @@ const DVSAAutomation = (function () {
                 form.appendChild(wrapper);
             });
 
-            const buttonWrapper = document.createElement('div');
-            buttonWrapper.style.cssText = 'display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;';
+            const buttonWrapper = app.createElement('div', {
+                style: 'display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;'
+            });
 
-            const saveBtn = document.createElement('button');
-            saveBtn.textContent = 'Save';
-            saveBtn.type = 'button';
-            saveBtn.style.cssText = 'padding: 10px 20px; background-color: #00703c; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;';
+            const saveBtn = app.createElement('button', {
+                textContent: 'Save',
+                type: 'button',
+                style: 'padding: 10px 20px; background-color: #00703c; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;'
+            });
 
-            const cancelBtn = document.createElement('button');
-            cancelBtn.textContent = 'Cancel';
-            cancelBtn.type = 'button';
-            cancelBtn.style.cssText = 'padding: 10px 20px; background-color: #f3f2f1; color: black; border: 1px solid #8c8c8c; cursor: pointer; border-radius: 4px;';
+            const cancelBtn = app.createElement('button', {
+                textContent: 'Cancel',
+                type: 'button',
+                style: 'padding: 10px 20px; background-color: #f3f2f1; color: black; border: 1px solid #8c8c8c; cursor: pointer; border-radius: 4px;'
+            });
 
             buttonWrapper.appendChild(cancelBtn);
             buttonWrapper.appendChild(saveBtn);
